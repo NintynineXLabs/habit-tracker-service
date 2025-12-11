@@ -6,6 +6,8 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  googleId: text("google_id").unique(),
+  picture: text("picture"),
 });
 
 export const insertUserSchema = createInsertSchema(users);
