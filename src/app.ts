@@ -35,10 +35,11 @@ app.route("/auth", authRoutes);
 
 // Apply Auth Middleware to Protected Routes
 app.use("/*", async (c, next) => {
-  if (c.req.path.startsWith("/auth") || c.req.path === "/health") {
-    await next();
+  const publicPaths = ["/auth", "/health", "/doc", "/scalar"];
+  if (publicPaths.some((path) => c.req.path.startsWith(path))) {
+    return await next();
   } else {
-    await authMiddleware(c, next);
+    return await authMiddleware(c, next);
   }
 });
 

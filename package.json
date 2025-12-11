@@ -8,6 +8,12 @@
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.31.8"
   },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
   "peerDependencies": {
     "typescript": "^5"
   },
