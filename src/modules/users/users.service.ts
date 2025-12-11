@@ -1,0 +1,11 @@
+import { db } from "../../db";
+import { users, type NewUser } from "./users.schema";
+
+export const getAllUsers = async () => {
+  return await db.select().from(users);
+};
+
+export const createUser = async (data: NewUser) => {
+  const result = await db.insert(users).values(data).returning();
+  return result[0];
+};
