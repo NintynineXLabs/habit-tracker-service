@@ -1,6 +1,6 @@
 import { pgTable, text, integer, boolean, uuid, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 import { users } from "../users/users.schema";
 import { habitMasters } from "../habits/habits.schema";
 import { sessionItems } from "../sessions/sessions.schema";
@@ -30,11 +30,32 @@ export const dailyLogsProgress = pgTable("daily_logs_progress", {
   timerSeconds: integer("timer_seconds").default(0),
 });
 
-export const insertDailyLogSchema = createInsertSchema(dailyLogs);
-export const selectDailyLogSchema = createSelectSchema(dailyLogs);
+import { toOpenApi } from "../../utils/zod-helper";
 
-export const insertDailyLogProgressSchema = createInsertSchema(dailyLogsProgress);
-export const selectDailyLogProgressSchema = createSelectSchema(dailyLogsProgress);
+export const insertDailyLogSchema = toOpenApi(createInsertSchema(dailyLogs), {
+  description: "Schema for creating a daily log",
+  example: {
+    userId: "123e4567-e89b-12d3-a456-426614174000",
+    date: "2023-01-01",
+    habitMasterId: "123e4567-e89b-12d3-a456-426614174000",
+  },
+});
+
+export const selectDailyLogSchema = toOpenApi(createSelectSchema(dailyLogs), {
+  description: "Schema for selecting a daily log",
+});
+
+export const insertDailyLogProgressSchema = toOpenApi(createInsertSchema(dailyLogsProgress), {
+  description: "Schema for creating a daily log progress",
+  example: {
+    dailyLogId: "123e4567-e89b-12d3-a456-426614174000",
+    isCompleted: true,
+  },
+});
+
+export const selectDailyLogProgressSchema = toOpenApi(createSelectSchema(dailyLogsProgress), {
+  description: "Schema for selecting a daily log progress",
+});
 
 export type DailyLog = z.infer<typeof selectDailyLogSchema>;
 export type NewDailyLog = z.infer<typeof insertDailyLogSchema>;

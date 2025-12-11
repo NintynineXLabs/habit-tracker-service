@@ -12,7 +12,9 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@hono/zod-openapi": "^1.1.5",
     "@hono/zod-validator": "^0.7.5",
+    "@scalar/hono-api-reference": "^0.9.28",
     "croner": "^9.1.0",
     "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",

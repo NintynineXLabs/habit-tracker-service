@@ -1,8 +1,9 @@
 import { pgTable, text, integer, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 import { users } from "../users/users.schema";
 import { habitMasters } from "../habits/habits.schema";
+import { toOpenApi } from "../../utils/zod-helper";
 
 export const weeklySessions = pgTable("weekly_sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -37,14 +38,46 @@ export const sessionCollaborators = pgTable("session_collaborators", {
     .notNull(),
 });
 
-export const insertWeeklySessionSchema = createInsertSchema(weeklySessions);
-export const selectWeeklySessionSchema = createSelectSchema(weeklySessions);
+export const insertWeeklySessionSchema = toOpenApi(createInsertSchema(weeklySessions), {
+  description: "Schema for creating a weekly session",
+  example: {
+    userId: "123e4567-e89b-12d3-a456-426614174000",
+    name: "Morning Routine",
+    description: "My morning routine",
+    dayOfWeek: 1,
+  },
+});
 
-export const insertSessionItemSchema = createInsertSchema(sessionItems);
-export const selectSessionItemSchema = createSelectSchema(sessionItems);
+export const selectWeeklySessionSchema = toOpenApi(createSelectSchema(weeklySessions), {
+  description: "Schema for selecting a weekly session",
+});
 
-export const insertSessionCollaboratorSchema = createInsertSchema(sessionCollaborators);
-export const selectSessionCollaboratorSchema = createSelectSchema(sessionCollaborators);
+export const insertSessionItemSchema = toOpenApi(createInsertSchema(sessionItems), {
+  description: "Schema for creating a session item",
+  example: {
+    sessionId: "123e4567-e89b-12d3-a456-426614174000",
+    habitMasterId: "123e4567-e89b-12d3-a456-426614174000",
+    startTime: "08:00",
+    durationMinutes: 30,
+    type: "fixed",
+  },
+});
+
+export const selectSessionItemSchema = toOpenApi(createSelectSchema(sessionItems), {
+  description: "Schema for selecting a session item",
+});
+
+export const insertSessionCollaboratorSchema = toOpenApi(createInsertSchema(sessionCollaborators), {
+  description: "Schema for creating a session collaborator",
+  example: {
+    sessionItemId: "123e4567-e89b-12d3-a456-426614174000",
+    collaboratorUserId: "123e4567-e89b-12d3-a456-426614174000",
+  },
+});
+
+export const selectSessionCollaboratorSchema = toOpenApi(createSelectSchema(sessionCollaborators), {
+  description: "Schema for selecting a session collaborator",
+});
 
 export type WeeklySession = z.infer<typeof selectWeeklySessionSchema>;
 export type NewWeeklySession = z.infer<typeof insertWeeklySessionSchema>;

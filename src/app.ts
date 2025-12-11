@@ -1,4 +1,5 @@
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
 import { logger } from "hono/logger";
 import usersRoutes from "./modules/users/users.routes";
 import habitsRoutes from "./modules/habits/habits.routes";
@@ -7,9 +8,27 @@ import dailyLogsRoutes from "./modules/daily-logs/daily-logs.routes";
 import authRoutes from "./modules/auth/auth.routes";
 import { authMiddleware } from "./middlewares/auth.middleware";
 
-const app = new Hono();
+const app = new OpenAPIHono();
 
 app.use("*", logger());
+
+// OpenAPI Documentation
+app.doc("/doc", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "Habit Tracker API",
+  },
+});
+
+// Swagger UI
+app.get(
+  "/scalar",
+  Scalar({
+    url: "/doc",
+    theme: "purple",
+  })
+);
 
 // Mount Auth Module (Public)
 app.route("/auth", authRoutes);

@@ -4,11 +4,11 @@ import type { NewUser } from "./users.schema";
 
 export const getUsers = async (c: Context) => {
   const result = await getAllUsers();
-  return c.json(result);
+  return c.json(result, 200);
 };
 
 export const createUserController = async (c: Context) => {
-  const data = (c as any).req.valid("json") as NewUser;
-  const result = await createUser(data);
-  return c.json(result);
+  const data = await c.req.json();
+  const result = await createUser(data as NewUser);
+  return c.json(result, 200);
 };

@@ -13,7 +13,7 @@ export const googleLogin = async (c: Context) => {
     const user = await findOrCreateUser(payload);
     const jwt = await generateJWT(user);
 
-    return c.json({ token: jwt, user });
+    return c.json({ token: jwt, user }, 200);
   } catch (error) {
     console.error("Login error:", error);
     return c.json({ error: "Invalid token" }, 401);
