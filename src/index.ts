@@ -10,9 +10,9 @@ new Cron("0 0 * * *", async () => {
 // Run immediately on startup for testing (optional, remove in production if not needed)
 // generateDailyLogs();
 
-console.log("Server is running on port 3000");
+console.log(`Server is running on port ${process.env.PORT || 8000}`);
 
 export default {
-  port: 3000,
+  port: process.env.PORT || 8000,
   fetch: app.fetch,
 };

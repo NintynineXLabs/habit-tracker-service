@@ -7,6 +7,8 @@ import sessionsRoutes from "./modules/sessions/sessions.routes";
 import dailyLogsRoutes from "./modules/daily-logs/daily-logs.routes";
 import authRoutes from "./modules/auth/auth.routes";
 import { authMiddleware } from "./middlewares/auth.middleware";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
 
 const app = new OpenAPIHono();
 
@@ -32,6 +34,32 @@ app.get(
 
 // Mount Auth Module (Public)
 app.route("/auth", authRoutes);
+
+// Health Check
+app.get("/health", async (c) => {
+  try {
+    // Check database connection
+    await db.execute(sql`select 1`);
+
+    return c.json({
+      status: "ok",
+      message: "Service is healthy",
+      database: "connected",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Health check failed:", error);
+    return c.json(
+      {
+        status: "error",
+        message: "Service is unhealthy",
+        database: "disconnected",
+        timestamp: new Date().toISOString(),
+      },
+      500
+    );
+  }
+});
 
 // Apply Auth Middleware to Protected Routes
 app.use("/*", async (c, next) => {
