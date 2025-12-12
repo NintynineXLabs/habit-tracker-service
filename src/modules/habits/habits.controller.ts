@@ -1,5 +1,9 @@
 import type { Context } from 'hono';
-import { getAllHabitMasters, createHabitMaster } from './habits.service';
+import {
+  getAllHabitMasters,
+  createHabitMaster,
+  getHabitMastersByUserId,
+} from './habits.service';
 import type { NewHabitMaster } from './habits.schema';
 
 export const getHabitMasters = async (c: Context) => {
@@ -7,8 +11,19 @@ export const getHabitMasters = async (c: Context) => {
   return c.json(result, 200);
 };
 
+export const getMyHabitMasters = async (c: Context) => {
+  const user = c.get('user');
+  const result = await getHabitMastersByUserId(user.sub);
+  return c.json(result, 200);
+};
+
 export const createHabitMasterController = async (c: Context) => {
+  const user = c.get('user');
   const data = await c.req.json();
-  const result = await createHabitMaster(data as NewHabitMaster);
+  const newHabit: NewHabitMaster = {
+    ...data,
+    userId: user.sub,
+  };
+  const result = await createHabitMaster(newHabit);
   return c.json(result, 200);
 };

@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
-  insertWeeklySessionSchema,
+  createWeeklySessionRequestSchema,
   insertSessionItemSchema,
   insertSessionCollaboratorSchema,
   selectWeeklySessionSchema,
@@ -9,6 +9,7 @@ import {
 } from './sessions.schema';
 import {
   getWeeklySessions,
+  getMyWeeklySessions,
   createWeeklySessionController,
   getSessionItems,
   createSessionItemController,
@@ -29,12 +30,28 @@ const getWeeklySessionsRoute = createRoute({
           schema: z.array(selectWeeklySessionSchema),
         },
       },
-      description: 'Retrieve weekly sessions',
+      description: 'Retrieve all weekly sessions',
+    },
+  },
+});
+
+const getMyWeeklySessionsRoute = createRoute({
+  method: 'get',
+  path: '/weekly/me',
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(selectWeeklySessionSchema),
+        },
+      },
+      description: 'Retrieve my weekly sessions',
     },
   },
 });
 
 app.openapi(getWeeklySessionsRoute, getWeeklySessions);
+app.openapi(getMyWeeklySessionsRoute, getMyWeeklySessions);
 
 const createWeeklySessionRoute = createRoute({
   method: 'post',
@@ -43,7 +60,7 @@ const createWeeklySessionRoute = createRoute({
     body: {
       content: {
         'application/json': {
-          schema: insertWeeklySessionSchema,
+          schema: createWeeklySessionRequestSchema,
         },
       },
     },

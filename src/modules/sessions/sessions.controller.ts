@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import {
   getAllWeeklySessions,
   createWeeklySession,
+  getWeeklySessionsByUserId,
   getAllSessionItems,
   createSessionItem,
   getAllSessionCollaborators,
@@ -19,9 +20,20 @@ export const getWeeklySessions = async (c: Context) => {
   return c.json(result, 200);
 };
 
+export const getMyWeeklySessions = async (c: Context) => {
+  const user = c.get('user');
+  const result = await getWeeklySessionsByUserId(user.sub);
+  return c.json(result, 200);
+};
+
 export const createWeeklySessionController = async (c: Context) => {
+  const user = c.get('user');
   const data = await c.req.json();
-  const result = await createWeeklySession(data as NewWeeklySession);
+  const newSession: NewWeeklySession = {
+    ...data,
+    userId: user.sub,
+  };
+  const result = await createWeeklySession(newSession);
   return c.json(result, 200);
 };
 

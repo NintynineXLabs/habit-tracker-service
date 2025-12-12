@@ -1,11 +1,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
-  insertHabitMasterSchema,
+  createHabitRequestSchema,
   selectHabitMasterSchema,
 } from './habits.schema';
 import {
   getHabitMasters,
   createHabitMasterController,
+  getMyHabitMasters,
 } from './habits.controller';
 
 const app = new OpenAPIHono();
@@ -20,12 +21,28 @@ const getHabitMastersRoute = createRoute({
           schema: z.array(selectHabitMasterSchema),
         },
       },
-      description: 'Retrieve habit masters',
+      description: 'Retrieve all habit masters',
+    },
+  },
+});
+
+const getMyHabitMastersRoute = createRoute({
+  method: 'get',
+  path: '/me',
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(selectHabitMasterSchema),
+        },
+      },
+      description: 'Retrieve my habit masters',
     },
   },
 });
 
 app.openapi(getHabitMastersRoute, getHabitMasters);
+app.openapi(getMyHabitMastersRoute, getMyHabitMasters);
 
 const createHabitMasterRoute = createRoute({
   method: 'post',
@@ -34,7 +51,7 @@ const createHabitMasterRoute = createRoute({
     body: {
       content: {
         'application/json': {
-          schema: insertHabitMasterSchema,
+          schema: createHabitRequestSchema,
         },
       },
     },

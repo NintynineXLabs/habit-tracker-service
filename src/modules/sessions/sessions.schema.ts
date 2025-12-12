@@ -41,9 +41,15 @@ export const sessionCollaborators = pgTable('session_collaborators', {
 export const insertWeeklySessionSchema = toOpenApi(
   createInsertSchema(weeklySessions),
   {
-    description: 'Schema for creating a weekly session',
+    description: 'Schema for inserting a weekly session (internal)',
+  },
+);
+
+export const createWeeklySessionRequestSchema = toOpenApi(
+  createInsertSchema(weeklySessions).omit({ userId: true }),
+  {
+    description: 'Schema for creating a weekly session request',
     example: {
-      userId: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Morning Routine',
       description: 'My morning routine',
       dayOfWeek: 1,
@@ -98,7 +104,7 @@ export const selectSessionCollaboratorSchema = toOpenApi(
 );
 
 export type WeeklySession = z.infer<typeof selectWeeklySessionSchema>;
-export type NewWeeklySession = z.infer<typeof insertWeeklySessionSchema>;
+export type NewWeeklySession = typeof weeklySessions.$inferInsert;
 
 export type SessionItem = z.infer<typeof selectSessionItemSchema>;
 export type NewSessionItem = z.infer<typeof insertSessionItemSchema>;

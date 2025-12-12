@@ -17,9 +17,15 @@ export const habitMasters = pgTable('habit_masters', {
 export const insertHabitMasterSchema = toOpenApi(
   createInsertSchema(habitMasters),
   {
-    description: 'Schema for creating a habit master',
+    description: 'Schema for inserting a habit master (internal)',
+  },
+);
+
+export const createHabitRequestSchema = toOpenApi(
+  createInsertSchema(habitMasters).omit({ userId: true }),
+  {
+    description: 'Schema for creating a habit master request',
     example: {
-      userId: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Reading',
       description: 'Read a book for 30 minutes',
       category: 'Personal Development',
@@ -35,4 +41,4 @@ export const selectHabitMasterSchema = toOpenApi(
 );
 
 export type HabitMaster = z.infer<typeof selectHabitMasterSchema>;
-export type NewHabitMaster = z.infer<typeof insertHabitMasterSchema>;
+export type NewHabitMaster = typeof habitMasters.$inferInsert;

@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   weeklySessions,
@@ -11,6 +12,13 @@ import {
 // Weekly Sessions
 export const getAllWeeklySessions = async () => {
   return await db.select().from(weeklySessions);
+};
+
+export const getWeeklySessionsByUserId = async (userId: string) => {
+  return await db
+    .select()
+    .from(weeklySessions)
+    .where(eq(weeklySessions.userId, userId));
 };
 
 export const createWeeklySession = async (data: NewWeeklySession) => {

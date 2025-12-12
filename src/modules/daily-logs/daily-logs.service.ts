@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   dailyLogs,
@@ -9,6 +10,10 @@ import {
 // Daily Logs
 export const getAllDailyLogs = async () => {
   return await db.select().from(dailyLogs);
+};
+
+export const getDailyLogsByUserId = async (userId: string) => {
+  return await db.select().from(dailyLogs).where(eq(dailyLogs.userId, userId));
 };
 
 export const createDailyLog = async (data: NewDailyLog) => {

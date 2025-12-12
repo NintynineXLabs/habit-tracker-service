@@ -1,12 +1,13 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
-  insertDailyLogSchema,
+  createDailyLogRequestSchema,
   insertDailyLogProgressSchema,
   selectDailyLogSchema,
   selectDailyLogProgressSchema,
 } from './daily-logs.schema';
 import {
   getDailyLogs,
+  getMyDailyLogs,
   createDailyLogController,
   getDailyLogsProgress,
   createDailyLogProgressController,
@@ -25,12 +26,28 @@ const getDailyLogsRoute = createRoute({
           schema: z.array(selectDailyLogSchema),
         },
       },
-      description: 'Retrieve daily logs',
+      description: 'Retrieve all daily logs',
+    },
+  },
+});
+
+const getMyDailyLogsRoute = createRoute({
+  method: 'get',
+  path: '/me',
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(selectDailyLogSchema),
+        },
+      },
+      description: 'Retrieve my daily logs',
     },
   },
 });
 
 app.openapi(getDailyLogsRoute, getDailyLogs);
+app.openapi(getMyDailyLogsRoute, getMyDailyLogs);
 
 const createDailyLogRoute = createRoute({
   method: 'post',
@@ -39,7 +56,7 @@ const createDailyLogRoute = createRoute({
     body: {
       content: {
         'application/json': {
-          schema: insertDailyLogSchema,
+          schema: createDailyLogRequestSchema,
         },
       },
     },
