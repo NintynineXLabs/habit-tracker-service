@@ -1,20 +1,26 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import { insertHabitMasterSchema, selectHabitMasterSchema } from "./habits.schema";
-import { getHabitMasters, createHabitMasterController } from "./habits.controller";
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import {
+  insertHabitMasterSchema,
+  selectHabitMasterSchema,
+} from './habits.schema';
+import {
+  getHabitMasters,
+  createHabitMasterController,
+} from './habits.controller';
 
 const app = new OpenAPIHono();
 
 const getHabitMastersRoute = createRoute({
-  method: "get",
-  path: "/",
+  method: 'get',
+  path: '/',
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: z.array(selectHabitMasterSchema),
         },
       },
-      description: "Retrieve habit masters",
+      description: 'Retrieve habit masters',
     },
   },
 });
@@ -22,12 +28,12 @@ const getHabitMastersRoute = createRoute({
 app.openapi(getHabitMastersRoute, getHabitMasters);
 
 const createHabitMasterRoute = createRoute({
-  method: "post",
-  path: "/",
+  method: 'post',
+  path: '/',
   request: {
     body: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: insertHabitMasterSchema,
         },
       },
@@ -36,11 +42,11 @@ const createHabitMasterRoute = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: selectHabitMasterSchema,
         },
       },
-      description: "Create a habit master",
+      description: 'Create a habit master',
     },
   },
 });

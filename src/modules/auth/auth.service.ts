@@ -1,8 +1,8 @@
-import { OAuth2Client } from "google-auth-library";
-import { sign } from "hono/jwt";
-import { db } from "../../db";
-import { users } from "../users/users.schema";
-import { eq } from "drizzle-orm";
+import { OAuth2Client } from 'google-auth-library';
+import { sign } from 'hono/jwt';
+import { db } from '../../db';
+import { users } from '../users/users.schema';
+import { eq } from 'drizzle-orm';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -18,7 +18,7 @@ export const findOrCreateUser = async (payload: any) => {
   const { sub: googleId, email, name, picture } = payload;
 
   if (!email) {
-    throw new Error("Email not found in Google token");
+    throw new Error('Email not found in Google token');
   }
 
   // Check if user exists by googleId
@@ -49,7 +49,7 @@ export const findOrCreateUser = async (payload: any) => {
   const [newUser] = await db
     .insert(users)
     .values({
-      name: name || email.split("@")[0],
+      name: name || email.split('@')[0],
       email,
       googleId,
       picture,
@@ -67,5 +67,5 @@ export const generateJWT = async (user: any) => {
     picture: user.picture,
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
   };
-  return await sign(payload, process.env.JWT_SECRET || "secret");
+  return await sign(payload, process.env.JWT_SECRET || 'secret');
 };

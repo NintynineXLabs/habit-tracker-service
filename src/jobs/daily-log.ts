@@ -1,22 +1,35 @@
-import { db } from "../db";
-import { weeklySessions, sessionItems, dailyLogs, dailyLogsProgress } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { db } from '../db';
+import {
+  weeklySessions,
+  sessionItems,
+  dailyLogs,
+  dailyLogsProgress,
+} from '../db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function generateDailyLogs() {
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 (Sunday) to 6 (Saturday)
-  const dateStr = today.toISOString().split("T")[0]!; // YYYY-MM-DD
+  const dateStr = today.toISOString().split('T')[0]!; // YYYY-MM-DD
 
-  console.log(`Running daily log generation for day ${dayOfWeek} (${dateStr})...`);
+  console.log(
+    `Running daily log generation for day ${dayOfWeek} (${dateStr})...`,
+  );
 
   // 1. Find all weekly sessions for today
-  const sessions = await db.select().from(weeklySessions).where(eq(weeklySessions.dayOfWeek, dayOfWeek));
+  const sessions = await db
+    .select()
+    .from(weeklySessions)
+    .where(eq(weeklySessions.dayOfWeek, dayOfWeek));
 
   console.log(`Found ${sessions.length} sessions for today.`);
 
   for (const session of sessions) {
     // 2. Get items for each session
-    const items = await db.select().from(sessionItems).where(eq(sessionItems.sessionId, session.id));
+    const items = await db
+      .select()
+      .from(sessionItems)
+      .where(eq(sessionItems.sessionId, session.id));
 
     for (const item of items) {
       // 3. Create daily log entry
@@ -47,5 +60,5 @@ export async function generateDailyLogs() {
     }
   }
 
-  console.log("Daily log generation completed.");
+  console.log('Daily log generation completed.');
 }

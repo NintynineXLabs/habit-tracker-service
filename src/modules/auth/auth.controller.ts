@@ -1,11 +1,15 @@
-import type { Context } from "hono";
-import { verifyGoogleToken, findOrCreateUser, generateJWT } from "./auth.service";
+import type { Context } from 'hono';
+import {
+  verifyGoogleToken,
+  findOrCreateUser,
+  generateJWT,
+} from './auth.service';
 
 export const googleLogin = async (c: Context) => {
   const { token } = await c.req.json();
 
   if (!token) {
-    return c.json({ error: "Token is required" }, 400);
+    return c.json({ error: 'Token is required' }, 400);
   }
 
   try {
@@ -15,7 +19,7 @@ export const googleLogin = async (c: Context) => {
 
     return c.json({ token: jwt, user }, 200);
   } catch (error) {
-    console.error("Login error:", error);
-    return c.json({ error: "Invalid token" }, 401);
+    console.error('Login error:', error);
+    return c.json({ error: 'Invalid token' }, 401);
   }
 };

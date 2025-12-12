@@ -1,4 +1,4 @@
-import { db } from "../../db";
+import { db } from '../../db';
 import {
   weeklySessions,
   sessionItems,
@@ -6,7 +6,7 @@ import {
   type NewWeeklySession,
   type NewSessionItem,
   type NewSessionCollaborator,
-} from "./sessions.schema";
+} from './sessions.schema';
 
 // Weekly Sessions
 export const getAllWeeklySessions = async () => {
@@ -33,7 +33,9 @@ export const getAllSessionCollaborators = async () => {
   return await db.select().from(sessionCollaborators);
 };
 
-export const createSessionCollaborator = async (data: NewSessionCollaborator) => {
+export const createSessionCollaborator = async (
+  data: NewSessionCollaborator,
+) => {
   const result = await db.insert(sessionCollaborators).values(data).returning();
   return result[0];
 };

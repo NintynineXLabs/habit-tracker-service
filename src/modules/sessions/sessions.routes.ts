@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   insertWeeklySessionSchema,
   insertSessionItemSchema,
@@ -6,7 +6,7 @@ import {
   selectWeeklySessionSchema,
   selectSessionItemSchema,
   selectSessionCollaboratorSchema,
-} from "./sessions.schema";
+} from './sessions.schema';
 import {
   getWeeklySessions,
   createWeeklySessionController,
@@ -14,22 +14,22 @@ import {
   createSessionItemController,
   getSessionCollaborators,
   createSessionCollaboratorController,
-} from "./sessions.controller";
+} from './sessions.controller';
 
 const app = new OpenAPIHono();
 
 // Weekly Sessions
 const getWeeklySessionsRoute = createRoute({
-  method: "get",
-  path: "/weekly",
+  method: 'get',
+  path: '/weekly',
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: z.array(selectWeeklySessionSchema),
         },
       },
-      description: "Retrieve weekly sessions",
+      description: 'Retrieve weekly sessions',
     },
   },
 });
@@ -37,12 +37,12 @@ const getWeeklySessionsRoute = createRoute({
 app.openapi(getWeeklySessionsRoute, getWeeklySessions);
 
 const createWeeklySessionRoute = createRoute({
-  method: "post",
-  path: "/weekly",
+  method: 'post',
+  path: '/weekly',
   request: {
     body: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: insertWeeklySessionSchema,
         },
       },
@@ -51,11 +51,11 @@ const createWeeklySessionRoute = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: selectWeeklySessionSchema,
         },
       },
-      description: "Create a weekly session",
+      description: 'Create a weekly session',
     },
   },
 });
@@ -64,16 +64,16 @@ app.openapi(createWeeklySessionRoute, createWeeklySessionController);
 
 // Session Items
 const getSessionItemsRoute = createRoute({
-  method: "get",
-  path: "/items",
+  method: 'get',
+  path: '/items',
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: z.array(selectSessionItemSchema),
         },
       },
-      description: "Retrieve session items",
+      description: 'Retrieve session items',
     },
   },
 });
@@ -81,12 +81,12 @@ const getSessionItemsRoute = createRoute({
 app.openapi(getSessionItemsRoute, getSessionItems);
 
 const createSessionItemRoute = createRoute({
-  method: "post",
-  path: "/items",
+  method: 'post',
+  path: '/items',
   request: {
     body: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: insertSessionItemSchema,
         },
       },
@@ -95,11 +95,11 @@ const createSessionItemRoute = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: selectSessionItemSchema,
         },
       },
-      description: "Create a session item",
+      description: 'Create a session item',
     },
   },
 });
@@ -108,16 +108,16 @@ app.openapi(createSessionItemRoute, createSessionItemController);
 
 // Session Collaborators
 const getSessionCollaboratorsRoute = createRoute({
-  method: "get",
-  path: "/collaborators",
+  method: 'get',
+  path: '/collaborators',
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: z.array(selectSessionCollaboratorSchema),
         },
       },
-      description: "Retrieve session collaborators",
+      description: 'Retrieve session collaborators',
     },
   },
 });
@@ -125,12 +125,12 @@ const getSessionCollaboratorsRoute = createRoute({
 app.openapi(getSessionCollaboratorsRoute, getSessionCollaborators);
 
 const createSessionCollaboratorRoute = createRoute({
-  method: "post",
-  path: "/collaborators",
+  method: 'post',
+  path: '/collaborators',
   request: {
     body: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: insertSessionCollaboratorSchema,
         },
       },
@@ -139,15 +139,18 @@ const createSessionCollaboratorRoute = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: selectSessionCollaboratorSchema,
         },
       },
-      description: "Create a session collaborator",
+      description: 'Create a session collaborator',
     },
   },
 });
 
-app.openapi(createSessionCollaboratorRoute, createSessionCollaboratorController);
+app.openapi(
+  createSessionCollaboratorRoute,
+  createSessionCollaboratorController,
+);
 
 export default app;

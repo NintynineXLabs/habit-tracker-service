@@ -1,16 +1,16 @@
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import { googleLogin } from "./auth.controller";
-import { googleLoginSchema, authResponseSchema } from "./auth.schema";
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { googleLogin } from './auth.controller';
+import { googleLoginSchema, authResponseSchema } from './auth.schema';
 
 const app = new OpenAPIHono();
 
 const googleLoginRoute = createRoute({
-  method: "post",
-  path: "/google",
+  method: 'post',
+  path: '/google',
   request: {
     body: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: googleLoginSchema,
         },
       },
@@ -19,17 +19,17 @@ const googleLoginRoute = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: authResponseSchema,
         },
       },
-      description: "Google Login",
+      description: 'Google Login',
     },
     400: {
-      description: "Bad Request",
+      description: 'Bad Request',
     },
     401: {
-      description: "Unauthorized",
+      description: 'Unauthorized',
     },
   },
 });

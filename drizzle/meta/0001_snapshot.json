@@ -64,12 +64,8 @@
           "name": "daily_logs_user_id_users_id_fk",
           "tableFrom": "daily_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -77,12 +73,8 @@
           "name": "daily_logs_session_item_id_session_items_id_fk",
           "tableFrom": "daily_logs",
           "tableTo": "session_items",
-          "columnsFrom": [
-            "session_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -90,12 +82,8 @@
           "name": "daily_logs_habit_master_id_habit_masters_id_fk",
           "tableFrom": "daily_logs",
           "tableTo": "habit_masters",
-          "columnsFrom": [
-            "habit_master_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["habit_master_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -150,12 +138,8 @@
           "name": "daily_logs_progress_daily_log_id_daily_logs_id_fk",
           "tableFrom": "daily_logs_progress",
           "tableTo": "daily_logs",
-          "columnsFrom": [
-            "daily_log_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["daily_log_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -208,12 +192,8 @@
           "name": "habit_masters_user_id_users_id_fk",
           "tableFrom": "habit_masters",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -254,12 +234,8 @@
           "name": "session_collaborators_session_item_id_session_items_id_fk",
           "tableFrom": "session_collaborators",
           "tableTo": "session_items",
-          "columnsFrom": [
-            "session_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -267,12 +243,8 @@
           "name": "session_collaborators_collaborator_user_id_users_id_fk",
           "tableFrom": "session_collaborators",
           "tableTo": "users",
-          "columnsFrom": [
-            "collaborator_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["collaborator_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -331,12 +303,8 @@
           "name": "session_items_session_id_weekly_sessions_id_fk",
           "tableFrom": "session_items",
           "tableTo": "weekly_sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -344,12 +312,8 @@
           "name": "session_items_habit_master_id_habit_masters_id_fk",
           "tableFrom": "session_items",
           "tableTo": "habit_masters",
-          "columnsFrom": [
-            "habit_master_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["habit_master_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -403,16 +367,12 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         },
         "users_google_id_unique": {
           "name": "users_google_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "google_id"
-          ]
+          "columns": ["google_id"]
         }
       },
       "policies": {},
@@ -461,12 +421,8 @@
           "name": "weekly_sessions_user_id_users_id_fk",
           "tableFrom": "weekly_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

@@ -1,4 +1,4 @@
-import type { Context } from "hono";
+import type { Context } from 'hono';
 import {
   getAllWeeklySessions,
   createWeeklySession,
@@ -6,8 +6,12 @@ import {
   createSessionItem,
   getAllSessionCollaborators,
   createSessionCollaborator,
-} from "./sessions.service";
-import type { NewWeeklySession, NewSessionItem, NewSessionCollaborator } from "./sessions.schema";
+} from './sessions.service';
+import type {
+  NewWeeklySession,
+  NewSessionItem,
+  NewSessionCollaborator,
+} from './sessions.schema';
 
 // Weekly Sessions
 export const getWeeklySessions = async (c: Context) => {
@@ -41,6 +45,8 @@ export const getSessionCollaborators = async (c: Context) => {
 
 export const createSessionCollaboratorController = async (c: Context) => {
   const data = await c.req.json();
-  const result = await createSessionCollaborator(data as NewSessionCollaborator);
+  const result = await createSessionCollaborator(
+    data as NewSessionCollaborator,
+  );
   return c.json(result, 200);
 };

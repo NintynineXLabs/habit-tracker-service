@@ -1,5 +1,5 @@
-import { db } from "../../db";
-import { users, type NewUser } from "./users.schema";
+import { db } from '../../db';
+import { users, type NewUser } from './users.schema';
 
 export const getAllUsers = async () => {
   return await db.select().from(users);

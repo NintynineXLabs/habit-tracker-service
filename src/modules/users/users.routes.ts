@@ -1,20 +1,20 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import { insertUserSchema, selectUserSchema } from "./users.schema";
-import { getUsers, createUserController } from "./users.controller";
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { insertUserSchema, selectUserSchema } from './users.schema';
+import { getUsers, createUserController } from './users.controller';
 
 const app = new OpenAPIHono();
 
 const getUsersRoute = createRoute({
-  method: "get",
-  path: "/",
+  method: 'get',
+  path: '/',
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: z.array(selectUserSchema),
         },
       },
-      description: "Retrieve users",
+      description: 'Retrieve users',
     },
   },
 });
@@ -22,12 +22,12 @@ const getUsersRoute = createRoute({
 app.openapi(getUsersRoute, getUsers);
 
 const createUserRoute = createRoute({
-  method: "post",
-  path: "/",
+  method: 'post',
+  path: '/',
   request: {
     body: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: insertUserSchema,
         },
       },
@@ -36,11 +36,11 @@ const createUserRoute = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
+        'application/json': {
           schema: selectUserSchema,
         },
       },
-      description: "Create a user",
+      description: 'Create a user',
     },
   },
 });

@@ -1,9 +1,9 @@
-import { Cron } from "croner";
-import { generateDailyLogs } from "./jobs/daily-log";
-import app from "./app";
+import { Cron } from 'croner';
+import { generateDailyLogs } from './jobs/daily-log';
+import app from './app';
 
 // Schedule daily log generation at 00:00 every day
-new Cron("0 0 * * *", async () => {
+new Cron('0 0 * * *', async () => {
   await generateDailyLogs();
 });
 

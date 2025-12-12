@@ -1,1 +1,1 @@
-export const APP_NAME = "Habit Tracker Service";
+export const APP_NAME = 'Habit Tracker Service';

@@ -1,5 +1,10 @@
-import { db } from "../../db";
-import { dailyLogs, dailyLogsProgress, type NewDailyLog, type NewDailyLogProgress } from "./daily-logs.schema";
+import { db } from '../../db';
+import {
+  dailyLogs,
+  dailyLogsProgress,
+  type NewDailyLog,
+  type NewDailyLogProgress,
+} from './daily-logs.schema';
 
 // Daily Logs
 export const getAllDailyLogs = async () => {

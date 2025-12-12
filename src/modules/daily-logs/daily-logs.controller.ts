@@ -1,6 +1,11 @@
-import type { Context } from "hono";
-import { getAllDailyLogs, createDailyLog, getAllDailyLogsProgress, createDailyLogProgress } from "./daily-logs.service";
-import type { NewDailyLog, NewDailyLogProgress } from "./daily-logs.schema";
+import type { Context } from 'hono';
+import {
+  getAllDailyLogs,
+  createDailyLog,
+  getAllDailyLogsProgress,
+  createDailyLogProgress,
+} from './daily-logs.service';
+import type { NewDailyLog, NewDailyLogProgress } from './daily-logs.schema';
 
 // Daily Logs
 export const getDailyLogs = async (c: Context) => {

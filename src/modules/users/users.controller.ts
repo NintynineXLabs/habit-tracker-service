@@ -1,6 +1,6 @@
-import type { Context } from "hono";
-import { getAllUsers, createUser } from "./users.service";
-import type { NewUser } from "./users.schema";
+import type { Context } from 'hono';
+import { getAllUsers, createUser } from './users.service';
+import type { NewUser } from './users.schema';
 
 export const getUsers = async (c: Context) => {
   const result = await getAllUsers();
