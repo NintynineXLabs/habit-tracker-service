@@ -12,6 +12,9 @@ export const habitMasters = pgTable('habit_masters', {
   name: text('name').notNull(),
   description: text('description'),
   category: text('category'),
+  iconName: text('icon_name'),
+  iconBackgroundColor: text('icon_background_color'),
+  iconColor: text('icon_color'),
 });
 
 export const insertHabitMasterSchema = toOpenApi(
@@ -29,6 +32,9 @@ export const createHabitRequestSchema = toOpenApi(
       name: 'Reading',
       description: 'Read a book for 30 minutes',
       category: 'Personal Development',
+      iconName: 'target',
+      iconBackgroundColor: '#6366f1',
+      iconColor: '#ffffff',
     },
   },
 );

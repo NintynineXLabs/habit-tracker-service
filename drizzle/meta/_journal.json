@@ -15,6 +15,13 @@
       "when": 1765463773450,
       "tag": "0001_tidy_robin_chapel",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765814476262,
+      "tag": "0002_optimal_stardust",
+      "breakpoints": true
     }
   ]
 }

@@ -85,7 +85,7 @@ app.use('/*', async (c, next) => {
 
 // Mount Modules
 app.route('/users', usersRoutes);
-app.route('/habit-masters', habitsRoutes);
+app.route('/habits', habitsRoutes);
 app.route('/sessions', sessionsRoutes); // Note: This will prefix /sessions/weekly, /sessions/items, etc.
 app.route('/daily-logs', dailyLogsRoutes);
 

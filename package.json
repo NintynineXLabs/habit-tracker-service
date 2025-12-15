@@ -17,6 +17,7 @@
     "typescript-eslint": "^8.49.0"
   },
   "scripts": {
+    "dev": "bun --watch run src/app.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
