@@ -4,6 +4,7 @@ import {
   createWeeklySession,
   getWeeklySessionsByUserId,
   getAllSessionItems,
+  getSessionItemsByUserId,
   createSessionItem,
   getAllSessionCollaborators,
   createSessionCollaborator,
@@ -40,6 +41,14 @@ export const createWeeklySessionController = async (c: Context) => {
 // Session Items
 export const getSessionItems = async (c: Context) => {
   const result = await getAllSessionItems();
+  return c.json(result, 200);
+};
+
+export const getMySessionItems = async (c: Context) => {
+  const user = c.get('user');
+  const dayOfWeekParam = c.req.query('dayOfWeek');
+  const dayOfWeek = dayOfWeekParam ? parseInt(dayOfWeekParam, 10) : undefined;
+  const result = await getSessionItemsByUserId(user.sub, dayOfWeek);
   return c.json(result, 200);
 };
 

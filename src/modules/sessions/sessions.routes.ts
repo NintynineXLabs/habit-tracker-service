@@ -12,6 +12,7 @@ import {
   getMyWeeklySessions,
   createWeeklySessionController,
   getSessionItems,
+  getMySessionItems,
   createSessionItemController,
   getSessionCollaborators,
   createSessionCollaboratorController,
@@ -95,7 +96,36 @@ const getSessionItemsRoute = createRoute({
   },
 });
 
+const getMySessionItemsRoute = createRoute({
+  method: 'get',
+  path: '/items/me',
+  request: {
+    query: z.object({
+      dayOfWeek: z.string().optional().openapi({
+        description: 'Filter by day of week (0-6, where 0 is Sunday)',
+        example: '1',
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.array(
+            z.object({
+              sessionItem: selectSessionItemSchema,
+              weeklySession: selectWeeklySessionSchema,
+            }),
+          ),
+        },
+      },
+      description: 'Retrieve my session items with optional day of week filter',
+    },
+  },
+});
+
 app.openapi(getSessionItemsRoute, getSessionItems);
+app.openapi(getMySessionItemsRoute, getMySessionItems);
 
 const createSessionItemRoute = createRoute({
   method: 'post',

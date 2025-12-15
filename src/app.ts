@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { logger } from 'hono/logger';
+import { cors } from 'hono/cors';
 import usersRoutes from './modules/users/users.routes';
 import habitsRoutes from './modules/habits/habits.routes';
 import sessionsRoutes from './modules/sessions/sessions.routes';
@@ -11,6 +12,17 @@ import { db } from './db';
 import { sql } from 'drizzle-orm';
 
 const app = new OpenAPIHono();
+
+// CORS Configuration for Development
+app.use(
+  '*',
+  cors({
+    origin: ['http://localhost:3000'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+  }),
+);
 
 app.use('*', logger());
 

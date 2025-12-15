@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   weeklySessions,
@@ -29,6 +29,26 @@ export const createWeeklySession = async (data: NewWeeklySession) => {
 // Session Items
 export const getAllSessionItems = async () => {
   return await db.select().from(sessionItems);
+};
+
+export const getSessionItemsByUserId = async (
+  userId: string,
+  dayOfWeek?: number,
+) => {
+  const conditions = [eq(weeklySessions.userId, userId)];
+
+  if (dayOfWeek !== undefined) {
+    conditions.push(eq(weeklySessions.dayOfWeek, dayOfWeek));
+  }
+
+  return await db
+    .select({
+      sessionItem: sessionItems,
+      weeklySession: weeklySessions,
+    })
+    .from(sessionItems)
+    .innerJoin(weeklySessions, eq(sessionItems.sessionId, weeklySessions.id))
+    .where(and(...conditions));
 };
 
 export const createSessionItem = async (data: NewSessionItem) => {
