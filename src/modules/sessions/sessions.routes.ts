@@ -6,6 +6,7 @@ import {
   selectWeeklySessionSchema,
   selectSessionItemSchema,
   selectSessionCollaboratorSchema,
+  selectWeeklySessionWithDetailsSchema,
 } from './sessions.schema';
 import {
   getWeeklySessions,
@@ -43,10 +44,10 @@ const getMyWeeklySessionsRoute = createRoute({
     200: {
       content: {
         'application/json': {
-          schema: z.array(selectWeeklySessionSchema),
+          schema: z.array(selectWeeklySessionWithDetailsSchema),
         },
       },
-      description: 'Retrieve my weekly sessions',
+      description: 'Retrieve my weekly sessions with full details',
     },
   },
 });

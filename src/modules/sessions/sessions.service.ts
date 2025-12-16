@@ -8,6 +8,8 @@ import {
   type NewSessionItem,
   type NewSessionCollaborator,
 } from './sessions.schema';
+import { habitMasters } from '../habits/habits.schema';
+import { users } from '../users/users.schema';
 
 // Weekly Sessions
 export const getAllWeeklySessions = async () => {
@@ -15,10 +17,54 @@ export const getAllWeeklySessions = async () => {
 };
 
 export const getWeeklySessionsByUserId = async (userId: string) => {
-  return await db
+  const sessions = await db
     .select()
     .from(weeklySessions)
     .where(eq(weeklySessions.userId, userId));
+
+  // For each session, fetch related items with habit masters and collaborators
+  const sessionsWithDetails = await Promise.all(
+    sessions.map(async (session) => {
+      // Get session items with habit masters joined
+      const items = await db
+        .select()
+        .from(sessionItems)
+        .leftJoin(habitMasters, eq(sessionItems.habitMasterId, habitMasters.id))
+        .where(eq(sessionItems.sessionId, session.id));
+
+      // For each item, get collaborators with user info
+      const itemsWithCollaborators = await Promise.all(
+        items.map(async (item) => {
+          const collaborators = await db
+            .select()
+            .from(sessionCollaborators)
+            .leftJoin(
+              users,
+              eq(sessionCollaborators.collaboratorUserId, users.id),
+            )
+            .where(
+              eq(sessionCollaborators.sessionItemId, item.session_items.id),
+            );
+
+          return {
+            ...item.session_items,
+            habitMaster: item.habit_masters,
+            collaborators: collaborators.map((c) => ({
+              ...c.session_collaborators,
+              collaboratorUser: c.users,
+            })),
+          };
+        }),
+      );
+
+      return {
+        ...session,
+        items: itemsWithCollaborators,
+      };
+    }),
+  );
+
+  return sessionsWithDetails;
 };
 
 export const createWeeklySession = async (data: NewWeeklySession) => {

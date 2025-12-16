@@ -115,3 +115,40 @@ export type SessionCollaborator = z.infer<
 export type NewSessionCollaborator = z.infer<
   typeof insertSessionCollaboratorSchema
 >;
+
+// Schema for weekly sessions with full nested data
+export const selectWeeklySessionWithDetailsSchema = toOpenApi(
+  selectWeeklySessionSchema.extend({
+    items: z.array(
+      selectSessionItemSchema.extend({
+        habitMaster: z
+          .object({
+            id: z.string(),
+            name: z.string(),
+            description: z.string().nullable(),
+            category: z.string().nullable(),
+            iconName: z.string().nullable(),
+            iconBackgroundColor: z.string().nullable(),
+            iconColor: z.string().nullable(),
+          })
+          .nullable(),
+        collaborators: z.array(
+          selectSessionCollaboratorSchema.extend({
+            collaboratorUser: z
+              .object({
+                id: z.string(),
+                name: z.string(),
+                email: z.string(),
+                picture: z.string().nullable(),
+              })
+              .nullable(),
+          }),
+        ),
+      }),
+    ),
+  }),
+  {
+    description:
+      'Schema for selecting a weekly session with all nested details',
+  },
+);
