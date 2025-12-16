@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   createWeeklySessionRequestSchema,
+  updateWeeklySessionRequestSchema,
   insertSessionItemSchema,
   insertSessionCollaboratorSchema,
   selectWeeklySessionSchema,
@@ -12,6 +13,8 @@ import {
   getWeeklySessions,
   getMyWeeklySessions,
   createWeeklySessionController,
+  updateWeeklySessionController,
+  deleteWeeklySessionController,
   getSessionItems,
   getMySessionItems,
   createSessionItemController,
@@ -89,6 +92,65 @@ const createWeeklySessionRoute = createRoute({
 });
 
 app.openapi(createWeeklySessionRoute, createWeeklySessionController);
+
+const updateWeeklySessionRoute = createRoute({
+  method: 'patch',
+  path: '/weekly/{id}',
+  request: {
+    params: z.object({
+      id: z.string().openapi({
+        description: 'Weekly session ID',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+      }),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: updateWeeklySessionRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: selectWeeklySessionSchema,
+        },
+      },
+      description: 'Update a weekly session',
+    },
+  },
+});
+
+app.openapi(updateWeeklySessionRoute, updateWeeklySessionController);
+
+const deleteWeeklySessionRoute = createRoute({
+  method: 'delete',
+  path: '/weekly/{id}',
+  request: {
+    params: z.object({
+      id: z.string().openapi({
+        description: 'Weekly session ID',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+          }),
+        },
+      },
+      description: 'Delete a weekly session',
+    },
+  },
+});
+
+app.openapi(deleteWeeklySessionRoute, deleteWeeklySessionController);
 
 // Session Items
 const getSessionItemsRoute = createRoute({

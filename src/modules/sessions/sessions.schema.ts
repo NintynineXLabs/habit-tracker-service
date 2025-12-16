@@ -57,6 +57,18 @@ export const createWeeklySessionRequestSchema = toOpenApi(
   },
 );
 
+export const updateWeeklySessionRequestSchema = toOpenApi(
+  createInsertSchema(weeklySessions).omit({ userId: true, id: true }).partial(),
+  {
+    description: 'Schema for updating a weekly session request',
+    example: {
+      name: 'Updated Morning Routine',
+      description: 'Updated description',
+      dayOfWeek: 2,
+    },
+  },
+);
+
 export const selectWeeklySessionSchema = toOpenApi(
   createSelectSchema(weeklySessions),
   {

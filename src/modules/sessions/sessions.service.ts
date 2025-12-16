@@ -81,6 +81,22 @@ export const createWeeklySession = async (data: NewWeeklySession) => {
   return result[0];
 };
 
+export const updateWeeklySession = async (
+  id: string,
+  data: Partial<NewWeeklySession>,
+) => {
+  const result = await db
+    .update(weeklySessions)
+    .set(data)
+    .where(eq(weeklySessions.id, id))
+    .returning();
+  return result[0];
+};
+
+export const deleteWeeklySession = async (id: string) => {
+  await db.delete(weeklySessions).where(eq(weeklySessions.id, id));
+};
+
 // Session Items
 export const getAllSessionItems = async () => {
   return await db.select().from(sessionItems);
