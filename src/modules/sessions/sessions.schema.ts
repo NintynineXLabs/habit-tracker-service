@@ -131,7 +131,7 @@ export type NewSessionCollaborator = z.infer<
 // Schema for weekly sessions with full nested data
 export const selectWeeklySessionWithDetailsSchema = toOpenApi(
   selectWeeklySessionSchema.extend({
-    items: z.array(
+    sessionItems: z.array(
       selectSessionItemSchema.extend({
         habitMaster: z
           .object({

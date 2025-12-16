@@ -8,6 +8,8 @@ import {
   getAllSessionItems,
   getSessionItemsByUserId,
   createSessionItem,
+  updateSessionItem,
+  deleteSessionItem,
   getAllSessionCollaborators,
   createSessionCollaborator,
 } from './sessions.service';
@@ -73,6 +75,19 @@ export const createSessionItemController = async (c: Context) => {
   const data = await c.req.json();
   const result = await createSessionItem(data as NewSessionItem);
   return c.json(result, 200);
+};
+
+export const updateSessionItemController = async (c: Context) => {
+  const id = c.req.param('id');
+  const data = await c.req.json();
+  const result = await updateSessionItem(id, data);
+  return c.json(result, 200);
+};
+
+export const deleteSessionItemController = async (c: Context) => {
+  const id = c.req.param('id');
+  await deleteSessionItem(id);
+  return c.json({ success: true }, 200);
 };
 
 // Session Collaborators

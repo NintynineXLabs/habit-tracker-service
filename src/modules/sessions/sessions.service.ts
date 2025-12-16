@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, asc } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   weeklySessions,
@@ -34,12 +34,13 @@ export const getWeeklySessionsByUserId = async (
   // For each session, fetch related items with habit masters and collaborators
   const sessionsWithDetails = await Promise.all(
     sessions.map(async (session) => {
-      // Get session items with habit masters joined
+      // Get session items with habit masters joined, sorted by startTime
       const items = await db
         .select()
         .from(sessionItems)
         .leftJoin(habitMasters, eq(sessionItems.habitMasterId, habitMasters.id))
-        .where(eq(sessionItems.sessionId, session.id));
+        .where(eq(sessionItems.sessionId, session.id))
+        .orderBy(asc(sessionItems.startTime));
 
       // For each item, get collaborators with user info
       const itemsWithCollaborators = await Promise.all(
@@ -68,7 +69,7 @@ export const getWeeklySessionsByUserId = async (
 
       return {
         ...session,
-        items: itemsWithCollaborators,
+        sessionItems: itemsWithCollaborators,
       };
     }),
   );
@@ -125,6 +126,22 @@ export const getSessionItemsByUserId = async (
 export const createSessionItem = async (data: NewSessionItem) => {
   const result = await db.insert(sessionItems).values(data).returning();
   return result[0];
+};
+
+export const updateSessionItem = async (
+  id: string,
+  data: Partial<NewSessionItem>,
+) => {
+  const result = await db
+    .update(sessionItems)
+    .set(data)
+    .where(eq(sessionItems.id, id))
+    .returning();
+  return result[0];
+};
+
+export const deleteSessionItem = async (id: string) => {
+  await db.delete(sessionItems).where(eq(sessionItems.id, id));
 };
 
 // Session Collaborators

@@ -18,6 +18,8 @@ import {
   getSessionItems,
   getMySessionItems,
   createSessionItemController,
+  updateSessionItemController,
+  deleteSessionItemController,
   getSessionCollaborators,
   createSessionCollaboratorController,
 } from './sessions.controller';
@@ -224,6 +226,65 @@ const createSessionItemRoute = createRoute({
 });
 
 app.openapi(createSessionItemRoute, createSessionItemController);
+
+const updateSessionItemRoute = createRoute({
+  method: 'patch',
+  path: '/items/{id}',
+  request: {
+    params: z.object({
+      id: z.string().openapi({
+        description: 'Session item ID',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+      }),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: insertSessionItemSchema.partial(),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: selectSessionItemSchema,
+        },
+      },
+      description: 'Update a session item',
+    },
+  },
+});
+
+app.openapi(updateSessionItemRoute, updateSessionItemController);
+
+const deleteSessionItemRoute = createRoute({
+  method: 'delete',
+  path: '/items/{id}',
+  request: {
+    params: z.object({
+      id: z.string().openapi({
+        description: 'Session item ID',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+          }),
+        },
+      },
+      description: 'Delete a session item',
+    },
+  },
+});
+
+app.openapi(deleteSessionItemRoute, deleteSessionItemController);
 
 // Session Collaborators
 const getSessionCollaboratorsRoute = createRoute({
