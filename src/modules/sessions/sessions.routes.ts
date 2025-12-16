@@ -40,6 +40,14 @@ const getWeeklySessionsRoute = createRoute({
 const getMyWeeklySessionsRoute = createRoute({
   method: 'get',
   path: '/weekly/me',
+  request: {
+    query: z.object({
+      dayOfWeek: z.string().optional().openapi({
+        description: 'Filter by day of week (0-6, where 0 is Sunday)',
+        example: '1',
+      }),
+    }),
+  },
   responses: {
     200: {
       content: {
@@ -47,7 +55,8 @@ const getMyWeeklySessionsRoute = createRoute({
           schema: z.array(selectWeeklySessionWithDetailsSchema),
         },
       },
-      description: 'Retrieve my weekly sessions with full details',
+      description:
+        'Retrieve my weekly sessions with full details and optional day filter',
     },
   },
 });

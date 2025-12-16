@@ -16,11 +16,20 @@ export const getAllWeeklySessions = async () => {
   return await db.select().from(weeklySessions);
 };
 
-export const getWeeklySessionsByUserId = async (userId: string) => {
+export const getWeeklySessionsByUserId = async (
+  userId: string,
+  dayOfWeek?: number,
+) => {
+  const conditions = [eq(weeklySessions.userId, userId)];
+
+  if (dayOfWeek !== undefined) {
+    conditions.push(eq(weeklySessions.dayOfWeek, dayOfWeek));
+  }
+
   const sessions = await db
     .select()
     .from(weeklySessions)
-    .where(eq(weeklySessions.userId, userId));
+    .where(and(...conditions));
 
   // For each session, fetch related items with habit masters and collaborators
   const sessionsWithDetails = await Promise.all(

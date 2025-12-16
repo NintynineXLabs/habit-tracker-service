@@ -23,7 +23,9 @@ export const getWeeklySessions = async (c: Context) => {
 
 export const getMyWeeklySessions = async (c: Context) => {
   const user = c.get('user');
-  const result = await getWeeklySessionsByUserId(user.sub);
+  const dayOfWeekParam = c.req.query('dayOfWeek');
+  const dayOfWeek = dayOfWeekParam ? parseInt(dayOfWeekParam, 10) : undefined;
+  const result = await getWeeklySessionsByUserId(user.sub, dayOfWeek);
   return c.json(result, 200);
 };
 
