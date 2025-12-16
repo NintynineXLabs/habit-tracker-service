@@ -7,6 +7,8 @@ import {
   getHabitMasters,
   createHabitMasterController,
   getMyHabitMasters,
+  updateHabitMasterController,
+  deleteHabitMasterController,
 } from './habits.controller';
 
 const app = new OpenAPIHono();
@@ -69,5 +71,64 @@ const createHabitMasterRoute = createRoute({
 });
 
 app.openapi(createHabitMasterRoute, createHabitMasterController);
+
+const updateHabitMasterRoute = createRoute({
+  method: 'put',
+  path: '/{id}',
+  request: {
+    params: z.object({
+      id: z.string().uuid(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: createHabitRequestSchema.partial(),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: selectHabitMasterSchema,
+        },
+      },
+      description: 'Update a habit master',
+    },
+    404: {
+      description: 'Habit not found or unauthorized',
+    },
+  },
+});
+
+app.openapi(updateHabitMasterRoute, updateHabitMasterController);
+
+const deleteHabitMasterRoute = createRoute({
+  method: 'delete',
+  path: '/{id}',
+  request: {
+    params: z.object({
+      id: z.string().uuid(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            message: z.string(),
+          }),
+        },
+      },
+      description: 'Habit deleted successfully',
+    },
+    404: {
+      description: 'Habit not found or unauthorized',
+    },
+  },
+});
+
+app.openapi(deleteHabitMasterRoute, deleteHabitMasterController);
 
 export default app;

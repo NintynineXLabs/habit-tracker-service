@@ -48,3 +48,4 @@ export const selectHabitMasterSchema = toOpenApi(
 
 export type HabitMaster = z.infer<typeof selectHabitMasterSchema>;
 export type NewHabitMaster = typeof habitMasters.$inferInsert;
+export type UpdateHabitRequest = Partial<Omit<NewHabitMaster, 'userId'>>;
