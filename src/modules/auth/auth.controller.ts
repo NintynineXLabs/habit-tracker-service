@@ -10,7 +10,7 @@ import {
 
 export const googleLogin = async (c: Context) => {
   const { token, code } = await c.req.json();
-
+  console.log({ token, code });
   if (!token && !code) {
     return c.json({ error: 'Token or Code is required' }, 400);
   }
@@ -21,6 +21,7 @@ export const googleLogin = async (c: Context) => {
 
     if (code) {
       const tokens = await exchangeGoogleCode(code);
+      console.log({ tokens });
       payload = await verifyGoogleToken(tokens.id_token!);
       googleRefreshToken = tokens.refresh_token;
     } else {

@@ -4,11 +4,22 @@ import { db } from '../../db';
 import { users } from '../users/users.schema';
 import { eq } from 'drizzle-orm';
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  'postmessage',
+);
 
 export const exchangeGoogleCode = async (code: string) => {
-  const { tokens } = await client.getToken(code);
-  return tokens;
+  console.log('Exchanging code:', code);
+  try {
+    const { tokens } = await client.getToken(code);
+    console.log('Tokens received:', tokens);
+    return tokens;
+  } catch (error) {
+    console.error('Error exchanging code:', error);
+    throw error;
+  }
 };
 
 export const verifyGoogleToken = async (token: string) => {
