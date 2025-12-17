@@ -27,16 +27,21 @@ mock.module('./auth.service', () => ({
     name: 'Test User',
     picture: 'http://example.com/pic.jpg',
   }),
-  findOrCreateUser: async (payload: any) => ({
+  exchangeGoogleCode: async () => ({
+    id_token: 'fake-id-token',
+    refresh_token: 'fake-refresh-token',
+  }),
+  findOrCreateUser: async (payload: any, refreshToken?: string) => ({
     id: '123',
     email: payload.email,
     name: payload.name,
+    googleRefreshToken: refreshToken,
   }),
   generateJWT: async () => 'fake-jwt-token',
 }));
 
 describe('Auth Module', () => {
-  it('should return token on POST /google', async () => {
+  it('should return token on POST /google with token', async () => {
     const res = await app.request('/google', {
       method: 'POST',
       body: JSON.stringify({ token: 'fake-token' }),
@@ -48,7 +53,22 @@ describe('Auth Module', () => {
     expect(body).toHaveProperty('user');
   });
 
-  it('should return 400 if token is missing', async () => {
+  it('should return token on POST /google with code', async () => {
+    const res = await app.request('/google', {
+      method: 'POST',
+      body: JSON.stringify({ code: 'fake-code' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body).toHaveProperty('token');
+    expect(body.user).toHaveProperty(
+      'googleRefreshToken',
+      'fake-refresh-token',
+    );
+  });
+
+  it('should return 400 if token and code are missing', async () => {
     const res = await app.request('/google', {
       method: 'POST',
       body: JSON.stringify({}),

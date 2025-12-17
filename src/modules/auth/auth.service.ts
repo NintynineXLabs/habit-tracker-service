@@ -6,6 +6,11 @@ import { eq } from 'drizzle-orm';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+export const exchangeGoogleCode = async (code: string) => {
+  const { tokens } = await client.getToken(code);
+  return tokens;
+};
+
 export const verifyGoogleToken = async (token: string) => {
   const ticket = await client.verifyIdToken({
     idToken: token,
@@ -14,7 +19,10 @@ export const verifyGoogleToken = async (token: string) => {
   return ticket.getPayload();
 };
 
-export const findOrCreateUser = async (payload: any) => {
+export const findOrCreateUser = async (
+  payload: any,
+  refreshToken?: string | null,
+) => {
   const { sub: googleId, email, name, picture } = payload;
 
   if (!email) {
@@ -27,6 +35,15 @@ export const findOrCreateUser = async (payload: any) => {
   });
 
   if (existingUser) {
+    // Update refresh token if provided
+    if (refreshToken) {
+      const [updatedUser] = await db
+        .update(users)
+        .set({ googleRefreshToken: refreshToken })
+        .where(eq(users.id, existingUser.id))
+        .returning();
+      return updatedUser;
+    }
     return existingUser;
   }
 
@@ -39,7 +56,11 @@ export const findOrCreateUser = async (payload: any) => {
     // Link googleId to existing user
     const [updatedUser] = await db
       .update(users)
-      .set({ googleId, picture })
+      .set({
+        googleId,
+        picture,
+        ...(refreshToken ? { googleRefreshToken: refreshToken } : {}),
+      })
       .where(eq(users.id, existingUserByEmail.id))
       .returning();
     return updatedUser;
@@ -53,6 +74,7 @@ export const findOrCreateUser = async (payload: any) => {
       email,
       googleId,
       picture,
+      googleRefreshToken: refreshToken,
     })
     .returning();
 
