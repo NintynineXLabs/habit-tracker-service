@@ -81,13 +81,46 @@ export const findOrCreateUser = async (
   return newUser;
 };
 
-export const generateJWT = async (user: any) => {
+export const updateAppRefreshToken = async (
+  userId: string,
+  refreshToken: string,
+) => {
+  await db.update(users).set({ refreshToken }).where(eq(users.id, userId));
+};
+
+export const generateAccessToken = async (user: any) => {
   const payload = {
     sub: user.id,
     name: user.name,
     email: user.email,
     picture: user.picture,
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
+    exp: Math.floor(Date.now() / 1000) + 60 * 15, // 15 minutes
   };
   return await sign(payload, process.env.JWT_SECRET || 'secret');
+};
+
+export const generateRefreshToken = async (user: any) => {
+  const payload = {
+    sub: user.id,
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
+  };
+  const refreshToken = await sign(
+    payload,
+    process.env.REFRESH_TOKEN_SECRET || 'refresh-secret',
+  );
+  await updateAppRefreshToken(user.id, refreshToken);
+  return refreshToken;
+};
+
+export const verifyRefreshToken = async (token: string) => {
+  const { verify } = await import('hono/jwt');
+  try {
+    const payload = await verify(
+      token,
+      process.env.REFRESH_TOKEN_SECRET || 'refresh-secret',
+    );
+    return payload;
+  } catch (e) {
+    return null;
+  }
 };

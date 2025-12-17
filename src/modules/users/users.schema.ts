@@ -9,6 +9,7 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   googleId: text('google_id').unique(),
   googleRefreshToken: text('google_refresh_token'),
+  refreshToken: text('refresh_token'),
   picture: text('picture'),
 });
 

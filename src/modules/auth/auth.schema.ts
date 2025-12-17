@@ -14,11 +14,26 @@ export const googleLoginSchema = z.object({
 
 export const authResponseSchema = z
   .object({
-    token: z.string().openapi({
-      description: 'JWT Token',
+    accessToken: z.string().openapi({
+      description: 'Access JWT Token',
+    }),
+    refreshToken: z.string().openapi({
+      description: 'Refresh JWT Token',
     }),
     user: selectUserSchema,
   })
   .openapi({
-    description: 'Auth response with JWT and user data',
+    description: 'Auth response with tokens and user data',
   });
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().openapi({
+    description: 'Refresh Token',
+  }),
+});
+
+export const refreshResponseSchema = z.object({
+  accessToken: z.string().openapi({
+    description: 'New Access JWT Token',
+  }),
+});
