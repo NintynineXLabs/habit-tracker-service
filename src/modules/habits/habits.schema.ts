@@ -1,4 +1,4 @@
-import { pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, uuid, timestamp } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from '@hono/zod-openapi';
 import { users } from '../users/users.schema';
@@ -15,6 +15,7 @@ export const habitMasters = pgTable('habit_masters', {
   iconName: text('icon_name'),
   iconBackgroundColor: text('icon_background_color'),
   iconColor: text('icon_color'),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const insertHabitMasterSchema = toOpenApi(

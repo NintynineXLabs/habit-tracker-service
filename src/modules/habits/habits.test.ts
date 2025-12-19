@@ -17,12 +17,15 @@ describe('Habits Module', () => {
   });
 
   it('should return 200 on GET /me', async () => {
-    // Mock middleware for user injection
-    app.use('/me', async (c, next) => {
+    const { Hono } = await import('hono');
+    const testApp = new Hono();
+    testApp.use('*', async (c, next) => {
       c.set('user' as any, { sub: 'test-user-id' });
       await next();
     });
-    const res = await app.request('/me');
+    testApp.route('/', app);
+
+    const res = await testApp.request('/me');
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toEqual([]);

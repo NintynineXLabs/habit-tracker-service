@@ -1,17 +1,22 @@
-import { eq } from 'drizzle-orm';
+import { eq, isNull, and } from 'drizzle-orm';
 import { db } from '../../db';
 import { habitMasters, type NewHabitMaster } from './habits.schema';
 import type { UpdateHabitRequest } from './habits.schema';
 
 export const getAllHabitMasters = async () => {
-  return await db.select().from(habitMasters);
+  return await db
+    .select()
+    .from(habitMasters)
+    .where(isNull(habitMasters.deletedAt));
 };
 
 export const getHabitMastersByUserId = async (userId: string) => {
   return await db
     .select()
     .from(habitMasters)
-    .where(eq(habitMasters.userId, userId));
+    .where(
+      and(eq(habitMasters.userId, userId), isNull(habitMasters.deletedAt)),
+    );
 };
 
 export const createHabitMaster = async (data: NewHabitMaster) => {
@@ -33,7 +38,8 @@ export const updateHabitMaster = async (
 
 export const deleteHabitMaster = async (id: string) => {
   const result = await db
-    .delete(habitMasters)
+    .update(habitMasters)
+    .set({ deletedAt: new Date() })
     .where(eq(habitMasters.id, id))
     .returning();
   return result[0];
