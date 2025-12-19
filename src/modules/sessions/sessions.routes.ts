@@ -1,47 +1,29 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
-  createWeeklySessionRequestSchema,
-  updateWeeklySessionRequestSchema,
-  insertSessionItemSchema,
-  insertSessionCollaboratorSchema,
-  selectWeeklySessionSchema,
-  selectSessionItemSchema,
-  selectSessionCollaboratorSchema,
-  selectWeeklySessionWithDetailsSchema,
-} from './sessions.schema';
-import {
-  getWeeklySessions,
-  getMyWeeklySessions,
-  createWeeklySessionController,
-  updateWeeklySessionController,
-  deleteWeeklySessionController,
-  getSessionItems,
-  getMySessionItems,
-  createSessionItemController,
-  updateSessionItemController,
-  deleteSessionItemController,
-  getSessionCollaborators,
   createSessionCollaboratorController,
+  createSessionItemController,
+  createWeeklySessionController,
+  deleteSessionItemController,
+  deleteWeeklySessionController,
+  getMySessionItems,
+  getMyWeeklySessions,
+  updateSessionItemController,
+  updateWeeklySessionController,
 } from './sessions.controller';
+import {
+  createWeeklySessionRequestSchema,
+  insertSessionCollaboratorSchema,
+  insertSessionItemSchema,
+  selectSessionCollaboratorSchema,
+  selectSessionItemSchema,
+  selectWeeklySessionSchema,
+  selectWeeklySessionWithDetailsSchema,
+  updateWeeklySessionRequestSchema,
+} from './sessions.schema';
 
 const app = new OpenAPIHono();
 
 // Weekly Sessions
-const getWeeklySessionsRoute = createRoute({
-  method: 'get',
-  path: '/weekly',
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(selectWeeklySessionSchema),
-        },
-      },
-      description: 'Retrieve all weekly sessions',
-    },
-  },
-});
-
 const getMyWeeklySessionsRoute = createRoute({
   method: 'get',
   path: '/weekly/me',
@@ -66,7 +48,6 @@ const getMyWeeklySessionsRoute = createRoute({
   },
 });
 
-app.openapi(getWeeklySessionsRoute, getWeeklySessions);
 app.openapi(getMyWeeklySessionsRoute, getMyWeeklySessions);
 
 const createWeeklySessionRoute = createRoute({
@@ -155,21 +136,6 @@ const deleteWeeklySessionRoute = createRoute({
 app.openapi(deleteWeeklySessionRoute, deleteWeeklySessionController);
 
 // Session Items
-const getSessionItemsRoute = createRoute({
-  method: 'get',
-  path: '/items',
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(selectSessionItemSchema),
-        },
-      },
-      description: 'Retrieve session items',
-    },
-  },
-});
-
 const getMySessionItemsRoute = createRoute({
   method: 'get',
   path: '/items/me',
@@ -198,7 +164,6 @@ const getMySessionItemsRoute = createRoute({
   },
 });
 
-app.openapi(getSessionItemsRoute, getSessionItems);
 app.openapi(getMySessionItemsRoute, getMySessionItems);
 
 const createSessionItemRoute = createRoute({
@@ -287,23 +252,6 @@ const deleteSessionItemRoute = createRoute({
 app.openapi(deleteSessionItemRoute, deleteSessionItemController);
 
 // Session Collaborators
-const getSessionCollaboratorsRoute = createRoute({
-  method: 'get',
-  path: '/collaborators',
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(selectSessionCollaboratorSchema),
-        },
-      },
-      description: 'Retrieve session collaborators',
-    },
-  },
-});
-
-app.openapi(getSessionCollaboratorsRoute, getSessionCollaborators);
-
 const createSessionCollaboratorRoute = createRoute({
   method: 'post',
   path: '/collaborators',
