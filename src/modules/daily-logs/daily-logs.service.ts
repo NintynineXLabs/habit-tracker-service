@@ -1,4 +1,3 @@
-import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   dailyLogs,
@@ -9,7 +8,25 @@ import {
 
 // Daily Logs
 export const getDailyLogsByUserId = async (userId: string) => {
-  return await db.select().from(dailyLogs).where(eq(dailyLogs.userId, userId));
+  return await db.query.dailyLogs.findMany({
+    where: (dailyLogs, { eq }) => eq(dailyLogs.userId, userId),
+    with: {
+      sessionItem: {
+        with: {
+          habitMaster: true,
+          collaborators: {
+            where: (collaborators, { isNull }) =>
+              isNull(collaborators.deletedAt),
+            with: {
+              collaboratorUser: true,
+            },
+          },
+        },
+      },
+      habitMaster: true,
+      progress: true,
+    },
+  });
 };
 
 export const createDailyLog = async (data: NewDailyLog) => {
