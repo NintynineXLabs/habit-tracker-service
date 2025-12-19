@@ -1,32 +1,26 @@
 import type { Context } from 'hono';
-import type { NewDailyLog, NewDailyLogProgress } from './daily-logs.schema';
+import type { NewDailyLogProgress } from './daily-logs.schema';
 import {
-  createDailyLog,
-  createDailyLogProgress,
   getDailyLogsByUserId,
+  syncDailyLogsForUser,
+  upsertDailyLogProgress,
 } from './daily-logs.service';
 
 // Daily Logs
 export const getMyDailyLogs = async (c: Context) => {
   const user = c.get('user');
-  const result = await getDailyLogsByUserId(user.sub);
-  return c.json(result, 200);
-};
+  const date = c.req.query('date') || new Date().toISOString().split('T')[0]!;
 
-export const createDailyLogController = async (c: Context) => {
-  const user = c.get('user');
-  const data = await c.req.json();
-  const newLog: NewDailyLog = {
-    ...data,
-    userId: user.sub,
-  };
-  const result = await createDailyLog(newLog);
+  // Trigger sync to ensure logs exist for this date
+  await syncDailyLogsForUser(user.sub, date);
+
+  const result = await getDailyLogsByUserId(user.sub, date);
   return c.json(result, 200);
 };
 
 // Daily Logs Progress
 export const createDailyLogProgressController = async (c: Context) => {
   const data = await c.req.json();
-  const result = await createDailyLogProgress(data as NewDailyLogProgress);
+  const result = await upsertDailyLogProgress(data as NewDailyLogProgress);
   return c.json(result, 200);
 };

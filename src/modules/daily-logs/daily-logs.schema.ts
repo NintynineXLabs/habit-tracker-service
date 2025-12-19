@@ -43,17 +43,6 @@ export const insertDailyLogSchema = toOpenApi(createInsertSchema(dailyLogs), {
   description: 'Schema for inserting a daily log (internal)',
 });
 
-export const createDailyLogRequestSchema = toOpenApi(
-  createInsertSchema(dailyLogs).omit({ userId: true }),
-  {
-    description: 'Schema for creating a daily log request',
-    example: {
-      date: '2023-01-01',
-      habitMasterId: '123e4567-e89b-12d3-a456-426614174000',
-    },
-  },
-);
-
 export const selectDailyLogSchema = toOpenApi(createSelectSchema(dailyLogs), {
   description: 'Schema for selecting a daily log',
 });
