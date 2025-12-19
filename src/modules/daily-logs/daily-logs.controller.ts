@@ -1,19 +1,12 @@
 import type { Context } from 'hono';
-import {
-  getAllDailyLogs,
-  createDailyLog,
-  getDailyLogsByUserId,
-  getAllDailyLogsProgress,
-  createDailyLogProgress,
-} from './daily-logs.service';
 import type { NewDailyLog, NewDailyLogProgress } from './daily-logs.schema';
+import {
+  createDailyLog,
+  createDailyLogProgress,
+  getDailyLogsByUserId,
+} from './daily-logs.service';
 
 // Daily Logs
-export const getDailyLogs = async (c: Context) => {
-  const result = await getAllDailyLogs();
-  return c.json(result, 200);
-};
-
 export const getMyDailyLogs = async (c: Context) => {
   const user = c.get('user');
   const result = await getDailyLogsByUserId(user.sub);
@@ -32,11 +25,6 @@ export const createDailyLogController = async (c: Context) => {
 };
 
 // Daily Logs Progress
-export const getDailyLogsProgress = async (c: Context) => {
-  const result = await getAllDailyLogsProgress();
-  return c.json(result, 200);
-};
-
 export const createDailyLogProgressController = async (c: Context) => {
   const data = await c.req.json();
   const result = await createDailyLogProgress(data as NewDailyLogProgress);

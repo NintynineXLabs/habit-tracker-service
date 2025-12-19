@@ -1,36 +1,19 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
+  createDailyLogController,
+  createDailyLogProgressController,
+  getMyDailyLogs,
+} from './daily-logs.controller';
+import {
   createDailyLogRequestSchema,
   insertDailyLogProgressSchema,
-  selectDailyLogSchema,
   selectDailyLogProgressSchema,
+  selectDailyLogSchema,
 } from './daily-logs.schema';
-import {
-  getDailyLogs,
-  getMyDailyLogs,
-  createDailyLogController,
-  getDailyLogsProgress,
-  createDailyLogProgressController,
-} from './daily-logs.controller';
 
 const app = new OpenAPIHono();
 
 // Daily Logs
-const getDailyLogsRoute = createRoute({
-  method: 'get',
-  path: '/',
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(selectDailyLogSchema),
-        },
-      },
-      description: 'Retrieve all daily logs',
-    },
-  },
-});
-
 const getMyDailyLogsRoute = createRoute({
   method: 'get',
   path: '/me',
@@ -46,7 +29,6 @@ const getMyDailyLogsRoute = createRoute({
   },
 });
 
-app.openapi(getDailyLogsRoute, getDailyLogs);
 app.openapi(getMyDailyLogsRoute, getMyDailyLogs);
 
 const createDailyLogRoute = createRoute({
@@ -76,23 +58,6 @@ const createDailyLogRoute = createRoute({
 app.openapi(createDailyLogRoute, createDailyLogController);
 
 // Daily Logs Progress
-const getDailyLogsProgressRoute = createRoute({
-  method: 'get',
-  path: '/progress',
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(selectDailyLogProgressSchema),
-        },
-      },
-      description: 'Retrieve daily logs progress',
-    },
-  },
-});
-
-app.openapi(getDailyLogsProgressRoute, getDailyLogsProgress);
-
 const createDailyLogProgressRoute = createRoute({
   method: 'post',
   path: '/progress',
