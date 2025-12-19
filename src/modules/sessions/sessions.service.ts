@@ -1,4 +1,4 @@
-import { eq, and, asc } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   weeklySessions,
@@ -8,69 +8,42 @@ import {
   type NewSessionItem,
   type NewSessionCollaborator,
 } from './sessions.schema';
-import { habitMasters } from '../habits/habits.schema';
-import { users } from '../users/users.schema';
 
 // Weekly Sessions
 export const getWeeklySessionsByUserId = async (
   userId: string,
   dayOfWeek?: number,
 ) => {
-  const conditions = [eq(weeklySessions.userId, userId)];
+  return await db.query.weeklySessions.findMany({
+    where: (weeklySessions, { eq, and, isNull }) => {
+      const conditions = [
+        eq(weeklySessions.userId, userId),
+        isNull(weeklySessions.deletedAt),
+      ];
 
-  if (dayOfWeek !== undefined) {
-    conditions.push(eq(weeklySessions.dayOfWeek, dayOfWeek));
-  }
+      if (dayOfWeek !== undefined) {
+        conditions.push(eq(weeklySessions.dayOfWeek, dayOfWeek));
+      }
 
-  const sessions = await db
-    .select()
-    .from(weeklySessions)
-    .where(and(...conditions));
-
-  // For each session, fetch related items with habit masters and collaborators
-  const sessionsWithDetails = await Promise.all(
-    sessions.map(async (session) => {
-      // Get session items with habit masters joined, sorted by startTime
-      const items = await db
-        .select()
-        .from(sessionItems)
-        .leftJoin(habitMasters, eq(sessionItems.habitMasterId, habitMasters.id))
-        .where(eq(sessionItems.sessionId, session.id))
-        .orderBy(asc(sessionItems.startTime));
-
-      // For each item, get collaborators with user info
-      const itemsWithCollaborators = await Promise.all(
-        items.map(async (item) => {
-          const collaborators = await db
-            .select()
-            .from(sessionCollaborators)
-            .leftJoin(
-              users,
-              eq(sessionCollaborators.collaboratorUserId, users.id),
-            )
-            .where(
-              eq(sessionCollaborators.sessionItemId, item.session_items.id),
-            );
-
-          return {
-            ...item.session_items,
-            habitMaster: item.habit_masters,
-            collaborators: collaborators.map((c) => ({
-              ...c.session_collaborators,
-              collaboratorUser: c.users,
-            })),
-          };
-        }),
-      );
-
-      return {
-        ...session,
-        sessionItems: itemsWithCollaborators,
-      };
-    }),
-  );
-
-  return sessionsWithDetails;
+      return and(...conditions);
+    },
+    with: {
+      sessionItems: {
+        where: (sessionItems, { isNull }) => isNull(sessionItems.deletedAt),
+        orderBy: (sessionItems, { asc }) => [asc(sessionItems.startTime)],
+        with: {
+          habitMaster: true,
+          collaborators: {
+            where: (collaborators, { isNull }) =>
+              isNull(collaborators.deletedAt),
+            with: {
+              collaboratorUser: true,
+            },
+          },
+        },
+      },
+    },
+  });
 };
 
 export const createWeeklySession = async (data: NewWeeklySession) => {

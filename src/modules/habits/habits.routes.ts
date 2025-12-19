@@ -4,7 +4,6 @@ import {
   selectHabitMasterSchema,
 } from './habits.schema';
 import {
-  getHabitMasters,
   createHabitMasterController,
   getMyHabitMasters,
   updateHabitMasterController,
@@ -12,21 +11,6 @@ import {
 } from './habits.controller';
 
 const app = new OpenAPIHono();
-
-const getHabitMastersRoute = createRoute({
-  method: 'get',
-  path: '/',
-  responses: {
-    200: {
-      content: {
-        'application/json': {
-          schema: z.array(selectHabitMasterSchema),
-        },
-      },
-      description: 'Retrieve all habit masters',
-    },
-  },
-});
 
 const getMyHabitMastersRoute = createRoute({
   method: 'get',
@@ -43,7 +27,6 @@ const getMyHabitMastersRoute = createRoute({
   },
 });
 
-app.openapi(getHabitMastersRoute, getHabitMasters);
 app.openapi(getMyHabitMastersRoute, getMyHabitMasters);
 
 const createHabitMasterRoute = createRoute({

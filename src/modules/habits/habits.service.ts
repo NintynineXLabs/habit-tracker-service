@@ -3,13 +3,6 @@ import { db } from '../../db';
 import { habitMasters, type NewHabitMaster } from './habits.schema';
 import type { UpdateHabitRequest } from './habits.schema';
 
-export const getAllHabitMasters = async () => {
-  return await db
-    .select()
-    .from(habitMasters)
-    .where(isNull(habitMasters.deletedAt));
-};
-
 export const getHabitMastersByUserId = async (userId: string) => {
   return await db
     .select()

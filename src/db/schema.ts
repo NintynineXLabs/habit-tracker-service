@@ -74,7 +74,7 @@ export const sessionCollaboratorsRelations = relations(
       fields: [sessionCollaborators.sessionItemId],
       references: [sessionItems.id],
     }),
-    user: one(users, {
+    collaboratorUser: one(users, {
       fields: [sessionCollaborators.collaboratorUserId],
       references: [users.id],
     }),

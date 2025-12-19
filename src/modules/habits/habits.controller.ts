@@ -1,17 +1,11 @@
 import type { Context } from 'hono';
 import {
-  getAllHabitMasters,
   createHabitMaster,
   getHabitMastersByUserId,
   updateHabitMaster,
   deleteHabitMaster,
 } from './habits.service';
 import type { NewHabitMaster, UpdateHabitRequest } from './habits.schema';
-
-export const getHabitMasters = async (c: Context) => {
-  const result = await getAllHabitMasters();
-  return c.json(result, 200);
-};
 
 export const getMyHabitMasters = async (c: Context) => {
   const user = c.get('user');
