@@ -12,10 +12,6 @@ import { habitMasters } from '../habits/habits.schema';
 import { users } from '../users/users.schema';
 
 // Weekly Sessions
-export const getAllWeeklySessions = async () => {
-  return await db.select().from(weeklySessions);
-};
-
 export const getWeeklySessionsByUserId = async (
   userId: string,
   dayOfWeek?: number,
@@ -95,14 +91,14 @@ export const updateWeeklySession = async (
 };
 
 export const deleteWeeklySession = async (id: string) => {
-  await db.delete(weeklySessions).where(eq(weeklySessions.id, id));
+  await db
+    .update(weeklySessions)
+    .set({ deletedAt: new Date() })
+    .where(eq(weeklySessions.id, id))
+    .returning();
 };
 
 // Session Items
-export const getAllSessionItems = async () => {
-  return await db.select().from(sessionItems);
-};
-
 export const getSessionItemsByUserId = async (
   userId: string,
   dayOfWeek?: number,
@@ -141,14 +137,14 @@ export const updateSessionItem = async (
 };
 
 export const deleteSessionItem = async (id: string) => {
-  await db.delete(sessionItems).where(eq(sessionItems.id, id));
+  await db
+    .update(sessionItems)
+    .set({ deletedAt: new Date() })
+    .where(eq(sessionItems.id, id))
+    .returning();
 };
 
 // Session Collaborators
-export const getAllSessionCollaborators = async () => {
-  return await db.select().from(sessionCollaborators);
-};
-
 export const createSessionCollaborator = async (
   data: NewSessionCollaborator,
 ) => {

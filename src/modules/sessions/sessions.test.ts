@@ -3,11 +3,8 @@ import app from './sessions.routes';
 
 // Mock service
 mock.module('./sessions.service', () => ({
-  getAllWeeklySessions: async () => [],
   createWeeklySession: async (data: any) => ({ id: '123', ...data }),
-  getAllSessionItems: async () => [],
   createSessionItem: async (data: any) => ({ id: '123', ...data }),
-  getAllSessionCollaborators: async () => [],
   createSessionCollaborator: async (data: any) => ({ id: '123', ...data }),
 }));
 

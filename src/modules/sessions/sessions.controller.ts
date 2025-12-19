@@ -1,16 +1,13 @@
 import type { Context } from 'hono';
 import {
-  getAllWeeklySessions,
   createWeeklySession,
   updateWeeklySession,
   deleteWeeklySession,
   getWeeklySessionsByUserId,
-  getAllSessionItems,
   getSessionItemsByUserId,
   createSessionItem,
   updateSessionItem,
   deleteSessionItem,
-  getAllSessionCollaborators,
   createSessionCollaborator,
 } from './sessions.service';
 import type {
@@ -18,12 +15,6 @@ import type {
   NewSessionItem,
   NewSessionCollaborator,
 } from './sessions.schema';
-
-// Weekly Sessions
-export const getWeeklySessions = async (c: Context) => {
-  const result = await getAllWeeklySessions();
-  return c.json(result, 200);
-};
 
 export const getMyWeeklySessions = async (c: Context) => {
   const user = c.get('user');
@@ -58,11 +49,6 @@ export const deleteWeeklySessionController = async (c: Context) => {
 };
 
 // Session Items
-export const getSessionItems = async (c: Context) => {
-  const result = await getAllSessionItems();
-  return c.json(result, 200);
-};
-
 export const getMySessionItems = async (c: Context) => {
   const user = c.get('user');
   const dayOfWeekParam = c.req.query('dayOfWeek');
@@ -91,11 +77,6 @@ export const deleteSessionItemController = async (c: Context) => {
 };
 
 // Session Collaborators
-export const getSessionCollaborators = async (c: Context) => {
-  const result = await getAllSessionCollaborators();
-  return c.json(result, 200);
-};
-
 export const createSessionCollaboratorController = async (c: Context) => {
   const data = await c.req.json();
   const result = await createSessionCollaborator(

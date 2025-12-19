@@ -1,4 +1,4 @@
-import { pgTable, text, integer, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, uuid, timestamp } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from '@hono/zod-openapi';
 import { users } from '../users/users.schema';
@@ -13,6 +13,7 @@ export const weeklySessions = pgTable('weekly_sessions', {
   name: text('name').notNull(),
   description: text('description'),
   dayOfWeek: integer('day_of_week').notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const sessionItems = pgTable('session_items', {
@@ -26,6 +27,7 @@ export const sessionItems = pgTable('session_items', {
   startTime: text('start_time').notNull(),
   durationMinutes: integer('duration_minutes').notNull(),
   type: text('type').notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const sessionCollaborators = pgTable('session_collaborators', {
@@ -36,6 +38,7 @@ export const sessionCollaborators = pgTable('session_collaborators', {
   collaboratorUserId: uuid('collaborator_user_id')
     .references(() => users.id)
     .notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const insertWeeklySessionSchema = toOpenApi(
