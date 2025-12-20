@@ -42,11 +42,25 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
       and(eq(dailyLogs.userId, userId), eq(dailyLogs.date, date)),
   });
 
-  if (existingLogs.length > 0) {
-    return existingLogs;
+  const existingSessionItemIds = new Set(
+    existingLogs
+      .map((log) => log.sessionItemId)
+      .filter((id): id is string => id !== null),
+  );
+
+  // 2. Validate date: only allow sync for today and tomorrow
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  const todayStr = today.toISOString().split('T')[0]!;
+  const tomorrowStr = tomorrow.toISOString().split('T')[0]!;
+
+  if (date !== todayStr && date !== tomorrowStr) {
+    return await getDailyLogsByUserId(userId, date);
   }
 
-  // 2. Get day of week from date string (YYYY-MM-DD)
+  // 3. Get day of week from date string (YYYY-MM-DD)
   // We use a regex to avoid timezone issues with new Date(dateStr)
   const [year, month, day] = date.split('-').map(Number);
   const dateObj = new Date(year!, month! - 1, day);
@@ -67,9 +81,14 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
     },
   });
 
-  // 4. Create daily logs and initial progress
+  // 4. Create daily logs and initial progress for new items
   for (const session of sessions) {
     for (const item of session.sessionItems) {
+      // Skip if log already exists for this session item
+      if (existingSessionItemIds.has(item.id)) {
+        continue;
+      }
+
       const [newLog] = await db
         .insert(dailyLogs)
         .values({
