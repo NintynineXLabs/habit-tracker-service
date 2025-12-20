@@ -7,10 +7,7 @@ import {
   sessionItems,
   sessionCollaborators,
 } from '../modules/sessions/sessions.schema';
-import {
-  dailyLogs,
-  dailyLogsProgress,
-} from '../modules/daily-logs/daily-logs.schema';
+import { dailyLogs } from '../modules/daily-logs/daily-logs.schema';
 
 export {
   users,
@@ -19,7 +16,6 @@ export {
   sessionItems,
   sessionCollaborators,
   dailyLogs,
-  dailyLogsProgress,
 };
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -81,10 +77,14 @@ export const sessionCollaboratorsRelations = relations(
   }),
 );
 
-export const dailyLogsRelations = relations(dailyLogs, ({ one, many }) => ({
+export const dailyLogsRelations = relations(dailyLogs, ({ one }) => ({
   user: one(users, {
     fields: [dailyLogs.userId],
     references: [users.id],
+  }),
+  session: one(weeklySessions, {
+    fields: [dailyLogs.sessionId],
+    references: [weeklySessions.id],
   }),
   sessionItem: one(sessionItems, {
     fields: [dailyLogs.sessionItemId],
@@ -94,15 +94,4 @@ export const dailyLogsRelations = relations(dailyLogs, ({ one, many }) => ({
     fields: [dailyLogs.habitMasterId],
     references: [habitMasters.id],
   }),
-  progress: many(dailyLogsProgress),
 }));
-
-export const dailyLogsProgressRelations = relations(
-  dailyLogsProgress,
-  ({ one }) => ({
-    dailyLog: one(dailyLogs, {
-      fields: [dailyLogsProgress.dailyLogId],
-      references: [dailyLogs.id],
-    }),
-  }),
-);

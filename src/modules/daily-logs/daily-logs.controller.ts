@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import type { NewDailyLogProgress } from './daily-logs.schema';
+import type { UpdateDailyLogProgress } from './daily-logs.schema';
 import {
   getDailyLogsByUserId,
   syncDailyLogsForUser,
@@ -21,6 +21,6 @@ export const getMyDailyLogs = async (c: Context) => {
 // Daily Logs Progress
 export const createDailyLogProgressController = async (c: Context) => {
   const data = await c.req.json();
-  const result = await upsertDailyLogProgress(data as NewDailyLogProgress);
+  const result = await upsertDailyLogProgress(data as UpdateDailyLogProgress);
   return c.json(result, 200);
 };

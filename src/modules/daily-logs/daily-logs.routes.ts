@@ -4,9 +4,8 @@ import {
   getMyDailyLogs,
 } from './daily-logs.controller';
 import {
-  insertDailyLogProgressSchema,
-  selectDailyLogProgressSchema,
   selectDailyLogSchema,
+  updateDailyLogProgressSchema,
 } from './daily-logs.schema';
 
 const app = new OpenAPIHono();
@@ -45,7 +44,7 @@ const createDailyLogProgressRoute = createRoute({
     body: {
       content: {
         'application/json': {
-          schema: insertDailyLogProgressSchema,
+          schema: updateDailyLogProgressSchema,
         },
       },
     },
@@ -54,7 +53,7 @@ const createDailyLogProgressRoute = createRoute({
     200: {
       content: {
         'application/json': {
-          schema: selectDailyLogProgressSchema,
+          schema: selectDailyLogSchema,
         },
       },
       description: 'Create a daily log progress',

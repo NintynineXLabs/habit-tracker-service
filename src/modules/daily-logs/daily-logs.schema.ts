@@ -10,7 +10,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from '@hono/zod-openapi';
 import { users } from '../users/users.schema';
 import { habitMasters } from '../habits/habits.schema';
-import { sessionItems } from '../sessions/sessions.schema';
+import { sessionItems, weeklySessions } from '../sessions/sessions.schema';
 
 export const dailyLogs = pgTable('daily_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -18,6 +18,7 @@ export const dailyLogs = pgTable('daily_logs', {
     .references(() => users.id)
     .notNull(),
   date: text('date').notNull(), // ISO date string YYYY-MM-DD
+  sessionId: uuid('session_id').references(() => weeklySessions.id),
   sessionItemId: uuid('session_item_id').references(() => sessionItems.id),
   habitMasterId: uuid('habit_master_id')
     .references(() => habitMasters.id)
@@ -25,16 +26,10 @@ export const dailyLogs = pgTable('daily_logs', {
   sessionName: text('session_name'),
   startTime: text('start_time'),
   durationMinutes: integer('duration_minutes'),
-});
-
-export const dailyLogsProgress = pgTable('daily_logs_progress', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  dailyLogId: uuid('daily_log_id')
-    .references(() => dailyLogs.id)
-    .notNull(),
+  // Progress fields
   isCompleted: boolean('is_completed').default(false).notNull(),
   completedAt: timestamp('completed_at'),
-  timerSeconds: integer('timer_seconds').default(0),
+  timerSeconds: integer('timer_seconds').default(0).notNull(),
 });
 
 import { toOpenApi } from '../../utils/zod-helper';
@@ -47,26 +42,16 @@ export const selectDailyLogSchema = toOpenApi(createSelectSchema(dailyLogs), {
   description: 'Schema for selecting a daily log',
 });
 
-export const insertDailyLogProgressSchema = toOpenApi(
-  createInsertSchema(dailyLogsProgress),
-  {
-    description: 'Schema for creating a daily log progress',
-    example: {
-      dailyLogId: '123e4567-e89b-12d3-a456-426614174000',
-      isCompleted: true,
-    },
-  },
-);
-
-export const selectDailyLogProgressSchema = toOpenApi(
-  createSelectSchema(dailyLogsProgress),
-  {
-    description: 'Schema for selecting a daily log progress',
-  },
-);
+export const updateDailyLogProgressSchema = z.object({
+  dailyLogId: z.string().uuid(),
+  isCompleted: z.boolean(),
+  completedAt: z.string().datetime().optional().nullable(),
+  timerSeconds: z.number().int().min(0),
+});
 
 export type DailyLog = z.infer<typeof selectDailyLogSchema>;
 export type NewDailyLog = typeof dailyLogs.$inferInsert;
 
-export type DailyLogProgress = z.infer<typeof selectDailyLogProgressSchema>;
-export type NewDailyLogProgress = z.infer<typeof insertDailyLogProgressSchema>;
+export type UpdateDailyLogProgress = z.infer<
+  typeof updateDailyLogProgressSchema
+>;

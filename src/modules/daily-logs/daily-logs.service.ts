@@ -1,10 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../db';
-import {
-  dailyLogs,
-  dailyLogsProgress,
-  type NewDailyLogProgress,
-} from './daily-logs.schema';
+import { dailyLogs, type UpdateDailyLogProgress } from './daily-logs.schema';
 
 // Daily Logs
 export const getDailyLogsByUserId = async (userId: string, date?: string) => {
@@ -21,8 +17,7 @@ export const getDailyLogsByUserId = async (userId: string, date?: string) => {
         with: {
           habitMaster: true,
           collaborators: {
-            where: (collaborators, { isNull }) =>
-              isNull(collaborators.deletedAt),
+            where: (cols: any, { isNull }: any) => isNull(cols.deletedAt),
             with: {
               collaboratorUser: true,
             },
@@ -30,7 +25,6 @@ export const getDailyLogsByUserId = async (userId: string, date?: string) => {
         },
       },
       habitMaster: true,
-      progress: true,
     },
   });
 };
@@ -76,12 +70,12 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
       ),
     with: {
       sessionItems: {
-        where: (sessionItems, { isNull }) => isNull(sessionItems.deletedAt),
+        where: (items: any, { isNull }: any) => isNull(items.deletedAt),
       },
     },
   });
 
-  // 4. Create daily logs and initial progress for new items
+  // 4. Create daily logs for new items
   for (const session of sessions) {
     for (const item of session.sessionItems) {
       // Skip if log already exists for this session item
@@ -89,26 +83,18 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
         continue;
       }
 
-      const [newLog] = await db
-        .insert(dailyLogs)
-        .values({
-          userId,
-          date,
-          sessionItemId: item.id,
-          habitMasterId: item.habitMasterId,
-          sessionName: session.name,
-          startTime: item.startTime,
-          durationMinutes: item.durationMinutes,
-        })
-        .returning();
-
-      if (newLog) {
-        await db.insert(dailyLogsProgress).values({
-          dailyLogId: newLog.id,
-          isCompleted: false,
-          timerSeconds: 0,
-        });
-      }
+      await db.insert(dailyLogs).values({
+        userId,
+        date,
+        sessionId: session.id,
+        sessionItemId: item.id,
+        habitMasterId: item.habitMasterId,
+        sessionName: session.name,
+        startTime: item.startTime,
+        durationMinutes: item.durationMinutes,
+        isCompleted: false,
+        timerSeconds: 0,
+      });
     }
   }
 
@@ -116,24 +102,16 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
 };
 
 // Daily Logs Progress
-export const upsertDailyLogProgress = async (data: NewDailyLogProgress) => {
-  const existing = await db.query.dailyLogsProgress.findFirst({
-    where: (progress, { eq }) => eq(progress.dailyLogId, data.dailyLogId),
-  });
+export const upsertDailyLogProgress = async (data: UpdateDailyLogProgress) => {
+  const result = await db
+    .update(dailyLogs)
+    .set({
+      isCompleted: data.isCompleted,
+      completedAt: data.completedAt ? new Date(data.completedAt) : null,
+      timerSeconds: data.timerSeconds,
+    })
+    .where(eq(dailyLogs.id, data.dailyLogId))
+    .returning();
 
-  if (existing) {
-    const result = await db
-      .update(dailyLogsProgress)
-      .set({
-        isCompleted: data.isCompleted,
-        completedAt: data.completedAt,
-        timerSeconds: data.timerSeconds,
-      })
-      .where(eq(dailyLogsProgress.id, existing.id))
-      .returning();
-    return result[0];
-  } else {
-    const result = await db.insert(dailyLogsProgress).values(data).returning();
-    return result[0];
-  }
+  return result[0];
 };
