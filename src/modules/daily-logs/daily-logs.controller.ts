@@ -16,8 +16,6 @@ export const getMyDailyLogs = async (c: Context) => {
   const user = c.get('user');
   const date = c.req.query('date')!;
 
-  console.log({ date, user });
-
   // Trigger sync to ensure logs exist for this date
   await syncDailyLogsForUser(user.sub, date);
 

@@ -1,18 +1,47 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { OpenAPIHono } from '@hono/zod-openapi';
+import type { Context } from 'hono';
 import originalApp from './daily-logs.routes';
+import type {
+  DailyLog,
+  UpdateDailyLogProgress,
+  UpdateDailyLogRequest,
+} from './daily-logs.schema';
+
+// Mock response types
+interface MockDailyLogResponse extends Partial<DailyLog> {
+  id: string;
+}
+
+interface MockDeleteResponse {
+  id: string;
+  userId: string;
+  deletedAt: Date;
+}
 
 // Mock the service to avoid DB connection
 mock.module('./daily-logs.service', () => ({
-  getDailyLogsByUserId: async () => [],
-  syncDailyLogsForUser: async () => [],
-  upsertDailyLogProgress: async (data: any) => ({ id: '123', ...data }),
-  updateDailyLog: async (id: string, userId: string, data: any) => ({
+  getDailyLogsByUserId: async (): Promise<DailyLog[]> => [],
+  syncDailyLogsForUser: async (): Promise<DailyLog[]> => [],
+  upsertDailyLogProgress: async (
+    data: UpdateDailyLogProgress,
+  ): Promise<MockDailyLogResponse> => ({
+    id: '123',
+    ...data,
+  }),
+  updateDailyLog: async (
+    id: string,
+    userId: string,
+    data: UpdateDailyLogRequest,
+  ): Promise<MockDailyLogResponse> => ({
     id,
     userId,
     ...data,
   }),
-  softDeleteDailyLog: async (id: string, userId: string) => ({
+  softDeleteDailyLog: async (
+    id: string,
+    userId: string,
+  ): Promise<MockDeleteResponse> => ({
     id,
     userId,
     deletedAt: new Date(),
@@ -22,8 +51,8 @@ mock.module('./daily-logs.service', () => ({
 const app = new OpenAPIHono();
 
 // Mock auth middleware for testing
-app.use('*', async (c, next) => {
-  (c as any).set('user', { sub: 'user-123' });
+app.use('*', async (c: Context, next) => {
+  c.set('user', { sub: 'user-123' });
   await next();
 });
 
@@ -51,7 +80,7 @@ describe('Daily Logs Module', () => {
       }),
     });
     expect(res.status).toBe(200);
-    const json = (await res.json()) as any;
+    const json = (await res.json()) as MockDailyLogResponse;
     expect(json.id).toBe(id);
     expect(json.startTime).toBe('09:00');
     expect(json.durationMinutes).toBe(45);
@@ -63,7 +92,7 @@ describe('Daily Logs Module', () => {
       method: 'DELETE',
     });
     expect(res.status).toBe(200);
-    const json = (await res.json()) as any;
+    const json = (await res.json()) as MockDeleteResponse;
     expect(json.id).toBe(id);
     expect(json.deletedAt).toBeDefined();
   });
@@ -77,11 +106,10 @@ describe('Daily Logs Module', () => {
       body: JSON.stringify({
         dailyLogId: '123e4567-e89b-12d3-a456-426614174000',
         status: 'completed',
-        timerSeconds: 0,
       }),
     });
     expect(res.status).toBe(200);
-    const json = (await res.json()) as any;
+    const json = (await res.json()) as MockDailyLogResponse;
     expect(json.id).toBe('123');
   });
 

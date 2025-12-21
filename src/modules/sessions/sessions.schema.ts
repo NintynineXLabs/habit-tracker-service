@@ -25,7 +25,7 @@ export const sessionItems = pgTable('session_items', {
     .references(() => habitMasters.id)
     .notNull(),
   startTime: text('start_time').notNull(),
-  durationMinutes: integer('duration_minutes').notNull(),
+  durationMinutes: integer('duration_minutes'),
   type: text('type').notNull(),
   deletedAt: timestamp('deleted_at'),
 });

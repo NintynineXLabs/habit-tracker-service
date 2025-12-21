@@ -91,10 +91,11 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
         sessionId: session.id,
         sessionItemId: item.id,
         sessionName: session.name,
+        sessionDescription: session.description,
+        type: item.type,
         startTime: item.startTime,
         durationMinutes: item.durationMinutes,
         status: 'pending',
-        timerSeconds: 0,
       });
     }
   }
@@ -138,7 +139,6 @@ export const upsertDailyLogProgress = async (data: UpdateDailyLogProgress) => {
     .set({
       status: data.status,
       statusUpdatedAt: new Date(),
-      timerSeconds: data.timerSeconds,
     })
     .where(eq(dailyLogs.id, data.dailyLogId))
     .returning();
