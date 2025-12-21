@@ -19,7 +19,7 @@ const getMyDailyLogsRoute = createRoute({
   path: '/me',
   request: {
     query: z.object({
-      date: z.string().optional().openapi({
+      date: z.string().openapi({
         description: 'Date in YYYY-MM-DD format',
         example: '2023-01-01',
       }),

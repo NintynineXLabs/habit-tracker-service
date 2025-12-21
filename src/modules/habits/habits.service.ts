@@ -1,4 +1,4 @@
-import { eq, isNull, and } from 'drizzle-orm';
+import { eq, isNull, and, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { habitMasters, type NewHabitMaster } from './habits.schema';
 import type { UpdateHabitRequest } from './habits.schema';
@@ -7,9 +7,8 @@ export const getHabitMastersByUserId = async (userId: string) => {
   return await db
     .select()
     .from(habitMasters)
-    .where(
-      and(eq(habitMasters.userId, userId), isNull(habitMasters.deletedAt)),
-    );
+    .where(and(eq(habitMasters.userId, userId), isNull(habitMasters.deletedAt)))
+    .orderBy(desc(habitMasters.id));
 };
 
 export const createHabitMaster = async (data: NewHabitMaster) => {

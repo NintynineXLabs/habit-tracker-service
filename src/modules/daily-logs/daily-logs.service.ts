@@ -7,24 +7,24 @@ import {
 } from './daily-logs.schema';
 
 // Daily Logs
-export const getDailyLogsByUserId = async (userId: string, date?: string) => {
+export const getDailyLogsByUserId = async (userId: string, date: string) => {
   return await db.query.dailyLogs.findMany({
-    where: (dailyLogs, { eq, and, isNull }) => {
-      const conditions = [
+    where: (dailyLogs, { eq, and, isNull }) =>
+      and(
         eq(dailyLogs.userId, userId),
+        eq(dailyLogs.date, date),
         isNull(dailyLogs.deletedAt),
-      ];
-      if (date) {
-        conditions.push(eq(dailyLogs.date, date));
-      }
-      return and(...conditions);
-    },
+      ),
+    orderBy: (dailyLogs, { asc }) => [
+      asc(dailyLogs.sessionId),
+      asc(dailyLogs.startTime),
+    ],
     with: {
       sessionItem: {
         with: {
           habitMaster: true,
           collaborators: {
-            where: (cols: any, { isNull }: any) => isNull(cols.deletedAt),
+            where: (cols, { isNull }) => isNull(cols.deletedAt),
             with: {
               collaboratorUser: true,
             },
@@ -77,7 +77,7 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
       ),
     with: {
       sessionItems: {
-        where: (items: any, { isNull }: any) => isNull(items.deletedAt),
+        where: (items, { isNull }) => isNull(items.deletedAt),
       },
     },
   });

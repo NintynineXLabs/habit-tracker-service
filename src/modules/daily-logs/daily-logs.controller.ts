@@ -14,7 +14,7 @@ import {
 // Daily Logs
 export const getMyDailyLogs = async (c: Context) => {
   const user = c.get('user');
-  const date = c.req.query('date') || new Date().toISOString().split('T')[0]!;
+  const date = c.req.query('date')!;
 
   console.log({ date, user });
 
