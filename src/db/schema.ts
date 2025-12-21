@@ -32,7 +32,6 @@ export const habitMastersRelations = relations(
       references: [users.id],
     }),
     sessionItems: many(sessionItems),
-    dailyLogs: many(dailyLogs),
   }),
 );
 
@@ -89,9 +88,5 @@ export const dailyLogsRelations = relations(dailyLogs, ({ one }) => ({
   sessionItem: one(sessionItems, {
     fields: [dailyLogs.sessionItemId],
     references: [sessionItems.id],
-  }),
-  habitMaster: one(habitMasters, {
-    fields: [dailyLogs.habitMasterId],
-    references: [habitMasters.id],
   }),
 }));

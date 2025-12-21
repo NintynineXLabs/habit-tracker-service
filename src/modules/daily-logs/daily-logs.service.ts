@@ -24,7 +24,6 @@ export const getDailyLogsByUserId = async (userId: string, date?: string) => {
           },
         },
       },
-      habitMaster: true,
     },
   });
 };
@@ -54,13 +53,10 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
     return await getDailyLogsByUserId(userId, date);
   }
 
-  // 3. Get day of week from date string (YYYY-MM-DD)
-  // We use a regex to avoid timezone issues with new Date(dateStr)
   const [year, month, day] = date.split('-').map(Number);
   const dateObj = new Date(year!, month! - 1, day);
   const dayOfWeek = dateObj.getDay();
 
-  // 3. Find weekly sessions for this user on this day
   const sessions = await db.query.weeklySessions.findMany({
     where: (weeklySessions, { eq, and, isNull }) =>
       and(
@@ -88,7 +84,6 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
         date,
         sessionId: session.id,
         sessionItemId: item.id,
-        habitMasterId: item.habitMasterId,
         sessionName: session.name,
         startTime: item.startTime,
         durationMinutes: item.durationMinutes,

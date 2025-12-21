@@ -9,7 +9,6 @@ import {
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from '@hono/zod-openapi';
 import { users } from '../users/users.schema';
-import { habitMasters } from '../habits/habits.schema';
 import { sessionItems, weeklySessions } from '../sessions/sessions.schema';
 
 export const dailyLogs = pgTable('daily_logs', {
@@ -19,9 +18,8 @@ export const dailyLogs = pgTable('daily_logs', {
     .notNull(),
   date: text('date').notNull(), // ISO date string YYYY-MM-DD
   sessionId: uuid('session_id').references(() => weeklySessions.id),
-  sessionItemId: uuid('session_item_id').references(() => sessionItems.id),
-  habitMasterId: uuid('habit_master_id')
-    .references(() => habitMasters.id)
+  sessionItemId: uuid('session_item_id')
+    .references(() => sessionItems.id)
     .notNull(),
   sessionName: text('session_name'),
   startTime: text('start_time'),
