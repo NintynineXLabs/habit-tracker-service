@@ -1,8 +1,8 @@
 import {
   pgTable,
+  pgEnum,
   text,
   integer,
-  boolean,
   uuid,
   timestamp,
 } from 'drizzle-orm/pg-core';
@@ -10,6 +10,14 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from '@hono/zod-openapi';
 import { users } from '../users/users.schema';
 import { sessionItems, weeklySessions } from '../sessions/sessions.schema';
+
+export const dailyLogStatusEnum = pgEnum('daily_log_status', [
+  'pending',
+  'inprogress',
+  'completed',
+  'failed',
+  'skipped',
+]);
 
 export const dailyLogs = pgTable('daily_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -25,8 +33,8 @@ export const dailyLogs = pgTable('daily_logs', {
   startTime: text('start_time'),
   durationMinutes: integer('duration_minutes'),
   // Progress fields
-  isCompleted: boolean('is_completed').default(false).notNull(),
-  completedAt: timestamp('completed_at'),
+  status: dailyLogStatusEnum('status').default('pending').notNull(),
+  statusUpdatedAt: timestamp('status_updated_at'),
   timerSeconds: integer('timer_seconds').default(0).notNull(),
   deletedAt: timestamp('deleted_at'),
 });
@@ -43,8 +51,7 @@ export const selectDailyLogSchema = toOpenApi(createSelectSchema(dailyLogs), {
 
 export const updateDailyLogProgressSchema = z.object({
   dailyLogId: z.string().uuid(),
-  isCompleted: z.boolean(),
-  completedAt: z.string().datetime().optional().nullable(),
+  status: z.enum(['pending', 'inprogress', 'completed', 'failed', 'skipped']),
   timerSeconds: z.number().int().min(0),
 });
 

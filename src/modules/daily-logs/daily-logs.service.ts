@@ -38,12 +38,8 @@ export const getDailyLogsByUserId = async (userId: string, date: string) => {
 export const syncDailyLogsForUser = async (userId: string, date: string) => {
   // 1. Check if logs already exist for this user and date
   const existingLogs = await db.query.dailyLogs.findMany({
-    where: (dailyLogs, { eq, and, isNull }) =>
-      and(
-        eq(dailyLogs.userId, userId),
-        eq(dailyLogs.date, date),
-        isNull(dailyLogs.deletedAt),
-      ),
+    where: (dailyLogs, { eq, and }) =>
+      and(eq(dailyLogs.userId, userId), eq(dailyLogs.date, date)),
   });
 
   const existingSessionItemIds = new Set(
@@ -69,11 +65,10 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
   const dayOfWeek = dateObj.getDay();
 
   const sessions = await db.query.weeklySessions.findMany({
-    where: (weeklySessions, { eq, and, isNull }) =>
+    where: (weeklySessions, { eq, and }) =>
       and(
         eq(weeklySessions.userId, userId),
         eq(weeklySessions.dayOfWeek, dayOfWeek),
-        isNull(weeklySessions.deletedAt),
       ),
     with: {
       sessionItems: {
@@ -98,7 +93,7 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
         sessionName: session.name,
         startTime: item.startTime,
         durationMinutes: item.durationMinutes,
-        isCompleted: false,
+        status: 'pending',
         timerSeconds: 0,
       });
     }
@@ -141,8 +136,8 @@ export const upsertDailyLogProgress = async (data: UpdateDailyLogProgress) => {
   const result = await db
     .update(dailyLogs)
     .set({
-      isCompleted: data.isCompleted,
-      completedAt: data.completedAt ? new Date(data.completedAt) : null,
+      status: data.status,
+      statusUpdatedAt: new Date(),
       timerSeconds: data.timerSeconds,
     })
     .where(eq(dailyLogs.id, data.dailyLogId))
