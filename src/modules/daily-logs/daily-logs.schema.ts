@@ -28,6 +28,7 @@ export const dailyLogs = pgTable('daily_logs', {
   isCompleted: boolean('is_completed').default(false).notNull(),
   completedAt: timestamp('completed_at'),
   timerSeconds: integer('timer_seconds').default(0).notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 import { toOpenApi } from '../../utils/zod-helper';
@@ -47,9 +48,16 @@ export const updateDailyLogProgressSchema = z.object({
   timerSeconds: z.number().int().min(0),
 });
 
+export const updateDailyLogRequestSchema = z.object({
+  startTime: z.string().optional(),
+  durationMinutes: z.number().int().min(0).optional(),
+});
+
 export type DailyLog = z.infer<typeof selectDailyLogSchema>;
 export type NewDailyLog = typeof dailyLogs.$inferInsert;
 
 export type UpdateDailyLogProgress = z.infer<
   typeof updateDailyLogProgressSchema
 >;
+
+export type UpdateDailyLogRequest = z.infer<typeof updateDailyLogRequestSchema>;

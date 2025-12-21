@@ -1,12 +1,19 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
-import { dailyLogs, type UpdateDailyLogProgress } from './daily-logs.schema';
+import {
+  dailyLogs,
+  type UpdateDailyLogProgress,
+  type UpdateDailyLogRequest,
+} from './daily-logs.schema';
 
 // Daily Logs
 export const getDailyLogsByUserId = async (userId: string, date?: string) => {
   return await db.query.dailyLogs.findMany({
-    where: (dailyLogs, { eq, and }) => {
-      const conditions = [eq(dailyLogs.userId, userId)];
+    where: (dailyLogs, { eq, and, isNull }) => {
+      const conditions = [
+        eq(dailyLogs.userId, userId),
+        isNull(dailyLogs.deletedAt),
+      ];
       if (date) {
         conditions.push(eq(dailyLogs.date, date));
       }
@@ -31,8 +38,12 @@ export const getDailyLogsByUserId = async (userId: string, date?: string) => {
 export const syncDailyLogsForUser = async (userId: string, date: string) => {
   // 1. Check if logs already exist for this user and date
   const existingLogs = await db.query.dailyLogs.findMany({
-    where: (dailyLogs, { eq, and }) =>
-      and(eq(dailyLogs.userId, userId), eq(dailyLogs.date, date)),
+    where: (dailyLogs, { eq, and, isNull }) =>
+      and(
+        eq(dailyLogs.userId, userId),
+        eq(dailyLogs.date, date),
+        isNull(dailyLogs.deletedAt),
+      ),
   });
 
   const existingSessionItemIds = new Set(
@@ -94,6 +105,35 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
   }
 
   return await getDailyLogsByUserId(userId, date);
+};
+
+export const updateDailyLog = async (
+  id: string,
+  userId: string,
+  data: UpdateDailyLogRequest,
+) => {
+  const result = await db
+    .update(dailyLogs)
+    .set({
+      startTime: data.startTime,
+      durationMinutes: data.durationMinutes,
+    })
+    .where(and(eq(dailyLogs.id, id), eq(dailyLogs.userId, userId)))
+    .returning();
+
+  return result[0];
+};
+
+export const softDeleteDailyLog = async (id: string, userId: string) => {
+  const result = await db
+    .update(dailyLogs)
+    .set({
+      deletedAt: new Date(),
+    })
+    .where(and(eq(dailyLogs.id, id), eq(dailyLogs.userId, userId)))
+    .returning();
+
+  return result[0];
 };
 
 // Daily Logs Progress
