@@ -1,7 +1,7 @@
 import { and, eq, lte, gte, sql, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { motivationalMessages } from './motivation.schema';
-import { weeklySessions, sessionItems, dailyLogs } from '../../db/schema';
+import { dailyLogs } from '../../db/schema';
 
 /**
  * Fetches a random motivational message that fits the current progress percentage.
@@ -36,27 +36,22 @@ export const getDynamicMotivation = async (
 
 /**
  * Calculates the user's daily progress and returns a summary with motivation.
+ * Uses dailyLogs as single source of truth for consistency.
  */
 export const getDailyProgressSummary = async (userId: string, date: string) => {
-  // 1. Calculate Total Planned (Target for the day)
-  const [year, month, day] = date.split('-').map(Number);
-  const dateObj = new Date(year!, month! - 1, day!);
-  const dayOfWeek = dateObj.getDay();
-
-  const plannedResult = await db
+  // 1. Calculate Total (all dailyLogs for the day)
+  const totalResult = await db
     .select({ count: sql<number>`count(*)` })
-    .from(sessionItems)
-    .innerJoin(weeklySessions, eq(sessionItems.sessionId, weeklySessions.id))
+    .from(dailyLogs)
     .where(
       and(
-        eq(weeklySessions.userId, userId),
-        eq(weeklySessions.dayOfWeek, dayOfWeek),
-        isNull(weeklySessions.deletedAt),
-        isNull(sessionItems.deletedAt),
+        eq(dailyLogs.userId, userId),
+        eq(dailyLogs.date, date),
+        isNull(dailyLogs.deletedAt),
       ),
     );
 
-  const totalPlanned = Number(plannedResult[0]?.count || 0);
+  const total = Number(totalResult[0]?.count || 0);
 
   // 2. Calculate Total Completed
   const completedResult = await db
@@ -75,7 +70,7 @@ export const getDailyProgressSummary = async (userId: string, date: string) => {
 
   // 3. Calculate Percentage (Safe division)
   const percentage =
-    totalPlanned === 0 ? 0 : Math.round((totalCompleted / totalPlanned) * 100);
+    total === 0 ? 0 : Math.round((totalCompleted / total) * 100);
 
   // 4. Fetch Motivational Message
   const message = await getDynamicMotivation(percentage);
@@ -87,9 +82,9 @@ export const getDailyProgressSummary = async (userId: string, date: string) => {
   return {
     date,
     stats: {
-      total: totalPlanned,
+      total,
       completed: totalCompleted,
-      remaining: Math.max(0, totalPlanned - totalCompleted),
+      remaining: Math.max(0, total - totalCompleted),
       percentage,
     },
     motivation: {
