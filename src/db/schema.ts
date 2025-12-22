@@ -8,6 +8,7 @@ import {
   sessionCollaborators,
 } from '../modules/sessions/sessions.schema';
 import { dailyLogs } from '../modules/daily-logs/daily-logs.schema';
+import { motivationalMessages } from '../modules/motivation/motivation.schema';
 
 export {
   users,
@@ -16,6 +17,7 @@ export {
   sessionItems,
   sessionCollaborators,
   dailyLogs,
+  motivationalMessages,
 };
 
 export const usersRelations = relations(users, ({ many }) => ({

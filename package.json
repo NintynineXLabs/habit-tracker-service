@@ -28,6 +28,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "type-check": "tsc --noEmit",
+    "seed:motivation": "ts-node scripts/seeds/motivation.seed.ts",
     "prepare": "husky"
   },
   "lint-staged": {

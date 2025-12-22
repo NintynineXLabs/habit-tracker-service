@@ -6,6 +6,7 @@ import usersRoutes from './modules/users/users.routes';
 import habitsRoutes from './modules/habits/habits.routes';
 import sessionsRoutes from './modules/sessions/sessions.routes';
 import dailyLogsRoutes from './modules/daily-logs/daily-logs.routes';
+import motivationRoutes from './modules/motivation/motivation.routes';
 import authRoutes from './modules/auth/auth.routes';
 import { authMiddleware } from './middlewares/auth.middleware';
 import { db } from './db';
@@ -88,5 +89,6 @@ app.route('/users', usersRoutes);
 app.route('/habits', habitsRoutes);
 app.route('/sessions', sessionsRoutes); // Note: This will prefix /sessions/weekly, /sessions/items, etc.
 app.route('/daily-logs', dailyLogsRoutes);
+app.route('/motivation', motivationRoutes);
 
 export default app;
