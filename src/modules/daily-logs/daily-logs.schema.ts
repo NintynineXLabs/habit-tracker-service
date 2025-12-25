@@ -20,12 +20,14 @@ export const dailyLogs = pgTable('daily_logs', {
     .references(() => users.id)
     .notNull(),
   date: text('date').notNull(), // ISO date string YYYY-MM-DD
-  sessionId: uuid('session_id').references(() => weeklySessions.id),
+  weeklySessionId: uuid('weekly_session_id').references(
+    () => weeklySessions.id,
+  ),
   sessionItemId: uuid('session_item_id')
     .references(() => sessionItems.id)
     .notNull(),
-  sessionName: text('session_name'),
-  sessionDescription: text('session_description'),
+  weeklySessionName: text('weekly_session_name'),
+  weeklySessionDescription: text('weekly_session_description'),
   type: text('type').notNull(),
   startTime: text('start_time'),
   durationMinutes: integer('duration_minutes'),

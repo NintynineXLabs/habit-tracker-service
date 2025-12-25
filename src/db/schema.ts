@@ -52,7 +52,7 @@ export const sessionItemsRelations = relations(
   sessionItems,
   ({ one, many }) => ({
     session: one(weeklySessions, {
-      fields: [sessionItems.sessionId],
+      fields: [sessionItems.weeklySessionId],
       references: [weeklySessions.id],
     }),
     habitMaster: one(habitMasters, {
@@ -84,7 +84,7 @@ export const dailyLogsRelations = relations(dailyLogs, ({ one }) => ({
     references: [users.id],
   }),
   session: one(weeklySessions, {
-    fields: [dailyLogs.sessionId],
+    fields: [dailyLogs.weeklySessionId],
     references: [weeklySessions.id],
   }),
   sessionItem: one(sessionItems, {

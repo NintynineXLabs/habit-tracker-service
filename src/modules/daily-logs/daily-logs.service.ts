@@ -16,7 +16,7 @@ export const getDailyLogsByUserId = async (userId: string, date: string) => {
         isNull(dailyLogs.deletedAt),
       ),
     orderBy: (dailyLogs, { asc }) => [
-      asc(dailyLogs.sessionId),
+      asc(dailyLogs.weeklySessionId),
       asc(dailyLogs.startTime),
     ],
     with: {
@@ -88,10 +88,10 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
       await db.insert(dailyLogs).values({
         userId,
         date,
-        sessionId: session.id,
+        weeklySessionId: session.id,
         sessionItemId: item.id,
-        sessionName: session.name,
-        sessionDescription: session.description,
+        weeklySessionName: session.name,
+        weeklySessionDescription: session.description,
         type: item.type,
         startTime: item.startTime,
         durationMinutes: item.durationMinutes,

@@ -18,7 +18,7 @@ export const weeklySessions = pgTable('weekly_sessions', {
 
 export const sessionItems = pgTable('session_items', {
   id: uuid('id').primaryKey().defaultRandom(),
-  sessionId: uuid('session_id')
+  weeklySessionId: uuid('weekly_session_id')
     .references(() => weeklySessions.id)
     .notNull(),
   habitMasterId: uuid('habit_master_id')
@@ -84,7 +84,7 @@ export const insertSessionItemSchema = toOpenApi(
   {
     description: 'Schema for creating a session item',
     example: {
-      sessionId: '123e4567-e89b-12d3-a456-426614174000',
+      weeklySessionId: '123e4567-e89b-12d3-a456-426614174000',
       habitMasterId: '123e4567-e89b-12d3-a456-426614174000',
       startTime: '08:00',
       durationMinutes: 30,

@@ -88,7 +88,10 @@ export const getSessionItemsByUserId = async (
       weeklySession: weeklySessions,
     })
     .from(sessionItems)
-    .innerJoin(weeklySessions, eq(sessionItems.sessionId, weeklySessions.id))
+    .innerJoin(
+      weeklySessions,
+      eq(sessionItems.weeklySessionId, weeklySessions.id),
+    )
     .where(and(...conditions));
 };
 
