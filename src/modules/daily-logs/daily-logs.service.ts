@@ -64,11 +64,15 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
   const dateObj = new Date(year!, month! - 1, day);
   const dayOfWeek = dateObj.getDay();
 
-  const sessions = await db.query.weeklySessions.findMany({
-    where: (weeklySessions, { eq, and }) =>
+  // === DUAL SOURCE TRIGGER ===
+
+  // Source A: Get user's own weekly sessions for this day
+  const ownSessions = await db.query.weeklySessions.findMany({
+    where: (weeklySessions, { eq, and, isNull }) =>
       and(
         eq(weeklySessions.userId, userId),
         eq(weeklySessions.dayOfWeek, dayOfWeek),
+        isNull(weeklySessions.deletedAt),
       ),
     with: {
       sessionItems: {
@@ -77,8 +81,44 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
     },
   });
 
-  // 4. Create daily logs for new items
-  for (const session of sessions) {
+  // Source B: Get collaborative session items where user is an accepted collaborator
+  const collaborativeItems = await db.query.sessionCollaborators.findMany({
+    where: (collaborators, { eq, and, isNull }) =>
+      and(
+        eq(collaborators.collaboratorUserId, userId),
+        eq(collaborators.status, 'accepted'),
+        isNull(collaborators.deletedAt),
+      ),
+    with: {
+      sessionItem: {
+        with: {
+          session: true, // Parent weekly session to check dayOfWeek
+        },
+      },
+    },
+  });
+
+  // Filter collaborative items to only include those on the target day
+  // and exclude items from own sessions (to avoid duplicates)
+  const ownSessionIds = new Set(ownSessions.map((s) => s.id));
+  const collabSessionItems = collaborativeItems
+    .filter((collab) => {
+      const session = collab.sessionItem?.session;
+      if (!session) return false;
+      // Skip if this belongs to user's own session
+      if (ownSessionIds.has(session.id)) return false;
+      // Check if the weekly session is on the target day
+      return session.dayOfWeek === dayOfWeek;
+    })
+    .map((collab) => ({
+      item: collab.sessionItem!,
+      session: collab.sessionItem!.session!,
+    }));
+
+  // === MERGE AND CREATE LOGS ===
+
+  // 4a. Create daily logs for own session items
+  for (const session of ownSessions) {
     for (const item of session.sessionItems) {
       // Skip if log already exists for this session item
       if (existingSessionItemIds.has(item.id)) {
@@ -98,6 +138,27 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
         status: 'pending',
       });
     }
+  }
+
+  // 4b. Create daily logs for collaborative session items
+  for (const { item, session } of collabSessionItems) {
+    // Skip if log already exists for this session item
+    if (existingSessionItemIds.has(item.id)) {
+      continue;
+    }
+
+    await db.insert(dailyLogs).values({
+      userId,
+      date,
+      weeklySessionId: session.id,
+      sessionItemId: item.id,
+      weeklySessionName: session.name,
+      weeklySessionDescription: session.description,
+      sessionItemType: item.type,
+      startTime: item.startTime,
+      durationMinutes: item.durationMinutes,
+      status: 'pending',
+    });
   }
 
   return await getDailyLogsByUserId(userId, date);
