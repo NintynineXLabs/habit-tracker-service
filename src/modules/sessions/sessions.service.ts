@@ -9,12 +9,13 @@ import {
   type NewSessionCollaborator,
 } from './sessions.schema';
 
-// Weekly Sessions
+// Weekly Sessions - includes both owned sessions and sessions where user is a collaborator
 export const getWeeklySessionsByUserId = async (
   userId: string,
   dayOfWeek?: number,
 ) => {
-  return await db.query.weeklySessions.findMany({
+  // Query 1: Get user's own weekly sessions
+  const ownSessions = await db.query.weeklySessions.findMany({
     where: (weeklySessions, { eq, and, isNull }) => {
       const conditions = [
         eq(weeklySessions.userId, userId),
@@ -28,6 +29,7 @@ export const getWeeklySessionsByUserId = async (
       return and(...conditions);
     },
     with: {
+      user: true,
       sessionItems: {
         where: (sessionItems, { isNull }) => isNull(sessionItems.deletedAt),
         orderBy: (sessionItems, { asc }) => [asc(sessionItems.startTime)],
@@ -44,6 +46,87 @@ export const getWeeklySessionsByUserId = async (
       },
     },
   });
+
+  // Query 2: Get session items where user is an accepted collaborator
+  // Entry point from session_collaborators table
+  const collaborativeItems = await db.query.sessionCollaborators.findMany({
+    where: (collaborators, { eq, and, isNull }) => {
+      const conditions = [
+        eq(collaborators.collaboratorUserId, userId),
+        eq(collaborators.status, 'accepted'),
+        isNull(collaborators.deletedAt),
+      ];
+      return and(...conditions);
+    },
+    with: {
+      sessionItem: {
+        with: {
+          habitMaster: true,
+          session: {
+            with: {
+              user: true,
+            },
+          },
+          collaborators: {
+            where: (collaborators, { isNull }) =>
+              isNull(collaborators.deletedAt),
+            with: {
+              collaboratorUser: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Filter by dayOfWeek if specified and exclude items from own sessions
+  const ownSessionIds = new Set(ownSessions.map((s) => s.id));
+  const filteredCollabItems = collaborativeItems.filter((collab) => {
+    const session = collab.sessionItem?.session;
+    if (!session) return false;
+    // Skip if this session is already in own sessions
+    if (ownSessionIds.has(session.id)) return false;
+    // Filter by dayOfWeek if specified
+    if (dayOfWeek !== undefined && session.dayOfWeek !== dayOfWeek)
+      return false;
+    return true;
+  });
+
+  // Group collaborative items by weekly session
+  const collabSessionsMap = new Map<
+    string,
+    {
+      session: (typeof filteredCollabItems)[0]['sessionItem']['session'];
+      items: (typeof filteredCollabItems)[0]['sessionItem'][];
+    }
+  >();
+
+  for (const collab of filteredCollabItems) {
+    const session = collab.sessionItem?.session;
+    const sessionItem = collab.sessionItem;
+    if (!session || !sessionItem) continue;
+
+    if (!collabSessionsMap.has(session.id)) {
+      collabSessionsMap.set(session.id, {
+        session,
+        items: [],
+      });
+    }
+    collabSessionsMap.get(session.id)!.items.push(sessionItem);
+  }
+
+  // Convert collaborative sessions to same format as own sessions
+  const collabSessions = Array.from(collabSessionsMap.values()).map(
+    ({ session, items }) => ({
+      ...session,
+      sessionItems: items.sort((a, b) =>
+        a.startTime.localeCompare(b.startTime),
+      ),
+    }),
+  );
+
+  // Merge both arrays - own sessions first, then collaborative sessions
+  return [...ownSessions, ...collabSessions];
 };
 
 export const createWeeklySession = async (data: NewWeeklySession) => {
