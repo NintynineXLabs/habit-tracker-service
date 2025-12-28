@@ -5,6 +5,7 @@ import type {
 } from './daily-logs.schema';
 import {
   getDailyLogsByUserId,
+  getGroupProgress,
   softDeleteDailyLog,
   syncDailyLogsForUser,
   updateDailyLog,
@@ -19,8 +20,27 @@ export const getMyDailyLogs = async (c: Context) => {
   // Trigger sync to ensure logs exist for this date
   await syncDailyLogsForUser(user.sub, date);
 
-  const result = await getDailyLogsByUserId(user.sub, date);
-  return c.json(result, 200);
+  const logs = await getDailyLogsByUserId(user.sub, date);
+
+  // Enrich collaborative logs with group progress
+  const enrichedLogs = await Promise.all(
+    logs.map(async (log) => {
+      const goalType = log.sessionItem?.goalType;
+
+      if (goalType === 'collaborative' && log.sessionItemId) {
+        const groupData = await getGroupProgress(log.sessionItemId, date);
+        return {
+          ...log,
+          groupProgress: groupData.summary,
+          collaboratorsStatus: groupData.members,
+        };
+      }
+
+      return log;
+    }),
+  );
+
+  return c.json(enrichedLogs, 200);
 };
 
 export const updateDailyLogController = async (c: Context) => {

@@ -1,10 +1,11 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   dailyLogs,
   type UpdateDailyLogProgress,
   type UpdateDailyLogRequest,
 } from './daily-logs.schema';
+import { sessionCollaborators } from '../sessions/sessions.schema';
 
 // Daily Logs
 export const getDailyLogsByUserId = async (userId: string, date: string) => {
@@ -21,6 +22,16 @@ export const getDailyLogsByUserId = async (userId: string, date: string) => {
     ],
     with: {
       sessionItem: {
+        columns: {
+          id: true,
+          weeklySessionId: true,
+          habitMasterId: true,
+          startTime: true,
+          durationMinutes: true,
+          type: true,
+          goalType: true,
+          deletedAt: true,
+        },
         with: {
           habitMaster: true,
           collaborators: {
@@ -33,6 +44,69 @@ export const getDailyLogsByUserId = async (userId: string, date: string) => {
       },
     },
   });
+};
+
+// Group Progress for Collaborative Goals
+export const getGroupProgress = async (sessionItemId: string, date: string) => {
+  // 1. Get all accepted collaborators (the "attendance list")
+  const allCollaborators = await db.query.sessionCollaborators.findMany({
+    where: and(
+      eq(sessionCollaborators.sessionItemId, sessionItemId),
+      eq(sessionCollaborators.status, 'accepted'),
+      isNull(sessionCollaborators.deletedAt),
+    ),
+    with: {
+      collaboratorUser: true,
+    },
+  });
+
+  // 2. Get today's daily logs for this session item
+  const todaysLogs = await db.query.dailyLogs.findMany({
+    where: and(
+      eq(dailyLogs.sessionItemId, sessionItemId),
+      eq(dailyLogs.date, date),
+      isNull(dailyLogs.deletedAt),
+    ),
+  });
+
+  // 3. Map collaborators with their status (handles lazy loading)
+  // Loop based on Collaborator, not Log, so users who haven't opened the app still appear
+  const members = allCollaborators.map((collab) => {
+    // Find if this collaborator has a log today
+    const userLog = todaysLogs.find(
+      (log) => log.userId === collab.collaboratorUserId,
+    );
+
+    return {
+      userId: collab.collaboratorUserId,
+      name: collab.collaboratorUser?.name ?? null,
+      email: collab.collaboratorUser?.email ?? collab.email,
+      picture: collab.collaboratorUser?.picture ?? null,
+      role: collab.role,
+      // If log found, use its status. If not (lazy load), default to 'pending'
+      status: userLog?.status ?? 'pending',
+      completedAt: userLog?.statusUpdatedAt ?? null,
+    };
+  });
+
+  // 4. Calculate statistics from the mapping result
+  const totalMembers = members.length;
+  const completedMembers = members.filter(
+    (m) => m.status === 'completed',
+  ).length;
+
+  return {
+    summary: {
+      totalMembers,
+      completedMembers,
+      isGroupComplete: totalMembers > 0 && totalMembers === completedMembers,
+      percentage:
+        totalMembers === 0
+          ? 0
+          : Math.round((completedMembers / totalMembers) * 100),
+    },
+    members,
+  };
 };
 
 export const syncDailyLogsForUser = async (userId: string, date: string) => {
