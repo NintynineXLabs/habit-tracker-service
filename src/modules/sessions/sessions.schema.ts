@@ -1,9 +1,38 @@
-import { pgTable, text, integer, uuid, timestamp } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  integer,
+  uuid,
+  timestamp,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from '@hono/zod-openapi';
 import { users } from '../users/users.schema';
 import { habitMasters } from '../habits/habits.schema';
 import { toOpenApi } from '../../utils/zod-helper';
+
+// Enum for collaborator invitation status
+export const collaboratorStatusEnum = pgEnum('collaborator_status', [
+  'invited',
+  'accepted',
+  'rejected',
+]);
+
+// Enum for collaborator role
+export const collaboratorRoleEnum = pgEnum('collaborator_role', [
+  'owner',
+  'member',
+]);
+
+// Enum for session item type
+export const sessionItemTypeEnum = pgEnum('session_item_type', [
+  'task',
+  'timer',
+]);
+
+// Enum for goal type
+export const goalTypeEnum = pgEnum('goal_type', ['individu', 'collaborative']);
 
 export const weeklySessions = pgTable('weekly_sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -26,7 +55,8 @@ export const sessionItems = pgTable('session_items', {
     .notNull(),
   startTime: text('start_time').notNull(),
   durationMinutes: integer('duration_minutes'),
-  type: text('type').notNull(),
+  type: sessionItemTypeEnum('type').notNull().default('task'),
+  goalType: goalTypeEnum('goal_type').notNull().default('individu'),
   deletedAt: timestamp('deleted_at'),
 });
 
@@ -38,6 +68,11 @@ export const sessionCollaborators = pgTable('session_collaborators', {
   collaboratorUserId: uuid('collaborator_user_id')
     .references(() => users.id)
     .notNull(),
+  status: collaboratorStatusEnum('status').notNull().default('invited'),
+  email: text('email').notNull(),
+  role: collaboratorRoleEnum('role').notNull().default('member'),
+  invitedAt: timestamp('invited_at').defaultNow(),
+  joinedAt: timestamp('joined_at'),
   deletedAt: timestamp('deleted_at'),
 });
 

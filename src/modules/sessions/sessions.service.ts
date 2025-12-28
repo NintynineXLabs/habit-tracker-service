@@ -95,9 +95,28 @@ export const getSessionItemsByUserId = async (
     .where(and(...conditions));
 };
 
-export const createSessionItem = async (data: NewSessionItem) => {
+export const createSessionItem = async (
+  data: NewSessionItem,
+  creatorInfo: { userId: string; email: string },
+) => {
+  // Create the session item
   const result = await db.insert(sessionItems).values(data).returning();
-  return result[0];
+  const sessionItem = result[0];
+
+  if (sessionItem) {
+    // Automatically add the creator as an owner collaborator
+    await db.insert(sessionCollaborators).values({
+      sessionItemId: sessionItem.id,
+      collaboratorUserId: creatorInfo.userId,
+      status: 'accepted',
+      email: creatorInfo.email,
+      role: 'owner',
+      invitedAt: new Date(),
+      joinedAt: new Date(),
+    });
+  }
+
+  return sessionItem;
 };
 
 export const updateSessionItem = async (

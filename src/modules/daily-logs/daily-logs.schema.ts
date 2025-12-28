@@ -1,8 +1,28 @@
 import { z } from '@hono/zod-openapi';
-import { integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { sessionItems, weeklySessions } from '../sessions/sessions.schema';
+import {
+  sessionItems,
+  sessionItemTypeEnum,
+  weeklySessions,
+} from '../sessions/sessions.schema';
 import { users } from '../users/users.schema';
+
+// Enum for daily log status
+export const dailyLogStatusEnum = pgEnum('daily_log_status', [
+  'pending',
+  'inprogress',
+  'completed',
+  'failed',
+  'skipped',
+]);
 
 export const DAILY_LOG_STATUS = [
   'pending',
@@ -28,11 +48,13 @@ export const dailyLogs = pgTable('daily_logs', {
     .notNull(),
   weeklySessionName: text('weekly_session_name'),
   weeklySessionDescription: text('weekly_session_description'),
-  type: text('type').notNull(),
+  sessionItemType: sessionItemTypeEnum('session_item_type')
+    .notNull()
+    .default('task'),
   startTime: text('start_time'),
   durationMinutes: integer('duration_minutes'),
   // Progress fields
-  status: text('status').$type<DailyLogStatus>().default('pending').notNull(),
+  status: dailyLogStatusEnum('status').notNull().default('pending'),
   statusUpdatedAt: timestamp('status_updated_at'),
   deletedAt: timestamp('deleted_at'),
 });

@@ -58,8 +58,12 @@ export const getMySessionItems = async (c: Context) => {
 };
 
 export const createSessionItemController = async (c: Context) => {
+  const user = c.get('user');
   const data = await c.req.json();
-  const result = await createSessionItem(data as NewSessionItem);
+  const result = await createSessionItem(data as NewSessionItem, {
+    userId: user.sub,
+    email: user.email,
+  });
   return c.json(result, 200);
 };
 

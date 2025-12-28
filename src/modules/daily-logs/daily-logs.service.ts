@@ -92,7 +92,7 @@ export const syncDailyLogsForUser = async (userId: string, date: string) => {
         sessionItemId: item.id,
         weeklySessionName: session.name,
         weeklySessionDescription: session.description,
-        type: item.type,
+        sessionItemType: item.type,
         startTime: item.startTime,
         durationMinutes: item.durationMinutes,
         status: 'pending',

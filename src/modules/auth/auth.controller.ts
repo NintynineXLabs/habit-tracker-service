@@ -7,6 +7,7 @@ import {
   exchangeGoogleCode,
   verifyRefreshToken,
 } from './auth.service';
+import { getUserById } from '../users/users.service';
 
 export const googleLogin = async (c: Context) => {
   const { token, code } = await c.req.json();
@@ -52,11 +53,18 @@ export const refreshAppToken = async (c: Context) => {
       return c.json({ error: 'Invalid refresh token' }, 401);
     }
 
-    // Optional: Check if refreshToken exists in DB for this user
-    // const user = await db.query.users.findFirst({ where: eq(users.id, payload.sub as string) });
-    // if (!user || user.refreshToken !== refreshToken) return c.json({ error: 'Invalid refresh token' }, 401);
+    // Fetch full user data from database to include in access token
+    const user = await getUserById(payload.sub as string);
+    if (!user) {
+      return c.json({ error: 'User not found' }, 401);
+    }
 
-    const accessToken = await generateAccessToken({ id: payload.sub });
+    // Verify refresh token matches DB
+    if (user.refreshToken !== refreshToken) {
+      return c.json({ error: 'Invalid refresh token' }, 401);
+    }
+
+    const accessToken = await generateAccessToken(user);
     return c.json({ accessToken }, 200);
   } catch (error) {
     console.error('Refresh error:', error);
