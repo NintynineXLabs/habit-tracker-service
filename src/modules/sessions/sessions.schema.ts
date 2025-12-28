@@ -65,9 +65,7 @@ export const sessionCollaborators = pgTable('session_collaborators', {
   sessionItemId: uuid('session_item_id')
     .references(() => sessionItems.id)
     .notNull(),
-  collaboratorUserId: uuid('collaborator_user_id')
-    .references(() => users.id)
-    .notNull(),
+  collaboratorUserId: uuid('collaborator_user_id').references(() => users.id), // Nullable for unregistered users
   status: collaboratorStatusEnum('status').notNull().default('invited'),
   email: text('email').notNull(),
   role: collaboratorRoleEnum('role').notNull().default('member'),

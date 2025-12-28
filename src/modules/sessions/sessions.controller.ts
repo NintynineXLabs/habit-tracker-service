@@ -9,6 +9,11 @@ import {
   updateSessionItem,
   deleteSessionItem,
   createSessionCollaborator,
+  addCollaboratorByEmail,
+  getCollaboratorsBySessionItem,
+  removeCollaborator,
+  updateCollaboratorStatus,
+  getPendingInvitationsForUser,
 } from './sessions.service';
 import type {
   NewWeeklySession,
@@ -87,4 +92,100 @@ export const createSessionCollaboratorController = async (c: Context) => {
     data as NewSessionCollaborator,
   );
   return c.json(result, 200);
+};
+
+// Add collaborator by email
+export const addCollaboratorController = async (c: Context) => {
+  const { sessionItemId, email } = await c.req.json();
+
+  if (!sessionItemId || !email) {
+    return c.json({ error: 'sessionItemId and email are required' }, 400);
+  }
+
+  const { collaborator, alreadyExists } = await addCollaboratorByEmail(
+    sessionItemId,
+    email,
+  );
+
+  if (!collaborator) {
+    return c.json({ error: 'Failed to create collaborator' }, 400);
+  }
+
+  if (alreadyExists) {
+    return c.json(
+      { message: 'Collaborator already exists', collaborator },
+      200,
+    );
+  }
+
+  return c.json({ message: 'Collaborator invited', collaborator }, 201);
+};
+
+// Get collaborators for a session item
+export const getCollaboratorsController = async (c: Context) => {
+  const sessionItemId = c.req.param('sessionItemId');
+
+  if (!sessionItemId) {
+    return c.json({ error: 'sessionItemId is required' }, 400);
+  }
+
+  const collaborators = await getCollaboratorsBySessionItem(sessionItemId);
+  return c.json({ collaborators }, 200);
+};
+
+// Remove collaborator
+export const removeCollaboratorController = async (c: Context) => {
+  const collaboratorId = c.req.param('collaboratorId');
+
+  if (!collaboratorId) {
+    return c.json({ error: 'collaboratorId is required' }, 400);
+  }
+
+  const result = await removeCollaborator(collaboratorId);
+
+  if (!result) {
+    return c.json({ error: 'Collaborator not found' }, 400);
+  }
+
+  return c.json({ success: true, collaborator: result }, 200);
+};
+
+// Accept or reject invitation
+export const updateCollaboratorStatusController = async (c: Context) => {
+  const user = c.get('user');
+  const collaboratorId = c.req.param('collaboratorId');
+  const { status } = await c.req.json();
+
+  if (!collaboratorId || !status) {
+    return c.json({ error: 'collaboratorId and status are required' }, 400);
+  }
+
+  if (status !== 'accepted' && status !== 'rejected') {
+    return c.json({ error: 'status must be "accepted" or "rejected"' }, 400);
+  }
+
+  const result = await updateCollaboratorStatus(
+    collaboratorId,
+    status,
+    user.sub,
+  );
+
+  if (!result) {
+    return c.json({ error: 'Collaborator not found' }, 400);
+  }
+
+  return c.json({ success: true, collaborator: result }, 200);
+};
+
+// Get my pending invitations
+export const getMyPendingInvitationsController = async (c: Context) => {
+  const user = c.get('user');
+  const email = user.email;
+
+  if (!email) {
+    return c.json({ error: 'User email not found' }, 400);
+  }
+
+  const invitations = await getPendingInvitationsForUser(email);
+  return c.json({ invitations }, 200);
 };

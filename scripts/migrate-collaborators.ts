@@ -182,6 +182,13 @@ async function migrate() {
     `;
     console.log('✓ Migrated daily_logs.status to enum');
 
+    // Make collaborator_user_id nullable for unregistered user invitations
+    await sql`
+      ALTER TABLE "session_collaborators" 
+      ALTER COLUMN "collaborator_user_id" DROP NOT NULL
+    `;
+    console.log('✓ Made collaborator_user_id nullable');
+
     console.log('\n✅ Migration completed successfully!');
   } catch (error) {
     console.error('Migration failed:', error);
