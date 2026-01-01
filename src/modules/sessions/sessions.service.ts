@@ -8,6 +8,7 @@ import {
   type NewSessionItem,
   type NewSessionCollaborator,
 } from './sessions.schema';
+import { createNotification } from '../notifications/notifications.service';
 
 // Weekly Sessions - includes both owned sessions and sessions where user is a collaborator
 export const getWeeklySessionsByUserId = async (
@@ -234,6 +235,7 @@ export const createSessionCollaborator = async (
 export const addCollaboratorByEmail = async (
   sessionItemId: string,
   email: string,
+  inviterName?: string,
 ) => {
   // Check if collaborator already exists for this session item and email
   const existingCollaborator = await db.query.sessionCollaborators.findFirst({
@@ -267,6 +269,35 @@ export const addCollaboratorByEmail = async (
       joinedAt: null,
     })
     .returning();
+
+  // Trigger Notification if user exists
+  if (existingUser && result[0]) {
+    // Fetch session item details for richer notification
+    const sessionItemDetails = await db.query.sessionItems.findFirst({
+      where: (items, { eq }) => eq(items.id, sessionItemId),
+      with: {
+        habitMaster: true,
+        session: true,
+      },
+    });
+
+    await createNotification({
+      userId: existingUser.id,
+      type: 'COLLAB_INVITE',
+      title: 'Undangan Kolaborasi Baru',
+      message: `${
+        inviterName || 'Seseorang'
+      } mengundangmu untuk bergabung dalam sesi habit ini.`,
+      metadata: {
+        sessionItemId,
+        inviteId: result[0].id,
+        habitName: sessionItemDetails?.habitMaster?.name || null,
+        sessionName: sessionItemDetails?.session?.name || null,
+        dayOfWeek: sessionItemDetails?.session?.dayOfWeek ?? null,
+        startTime: sessionItemDetails?.startTime || null,
+      },
+    });
+  }
 
   return { collaborator: result[0], alreadyExists: false };
 };
@@ -315,6 +346,49 @@ export const updateCollaboratorStatus = async (
     .set(updateData)
     .where(eq(sessionCollaborators.id, collaboratorId))
     .returning();
+
+  const updatedCollaborator = result[0];
+
+  // If accepted, notify the owner
+  if (status === 'accepted' && updatedCollaborator) {
+    // 1. Get Session Item to find the owner (or check session_collaborators with role='owner')
+    const sessionItem = await db.query.sessionItems.findFirst({
+      where: (items, { eq }) => eq(items.id, updatedCollaborator.sessionItemId),
+      with: {
+        habitMaster: true,
+        session: true,
+        collaborators: {
+          where: (collabs, { eq }) => eq(collabs.role, 'owner'),
+        },
+      },
+    });
+
+    const owner = sessionItem?.collaborators[0];
+    if (owner && owner.collaboratorUserId) {
+      // Get acceptor name
+      const acceptor = await db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.id, userId!),
+      });
+
+      await createNotification({
+        userId: owner.collaboratorUserId,
+        type: 'COLLAB_ACCEPTED',
+        title: 'Undangan Diterima',
+        message: `${
+          acceptor?.name || 'Seorang pengguna'
+        } telah menerima undangan kolaborasimu.`,
+        metadata: {
+          sessionItemId: updatedCollaborator.sessionItemId,
+          collaboratorId: updatedCollaborator.id,
+          habitName: sessionItem?.habitMaster?.name || null,
+          sessionName: sessionItem?.session?.name || null,
+          dayOfWeek: sessionItem?.session?.dayOfWeek ?? null,
+          startTime: sessionItem?.startTime || null,
+        },
+      });
+    }
+  }
+
   return result[0];
 };
 

@@ -6,9 +6,20 @@ import {
   weeklySessions,
   sessionItems,
   sessionCollaborators,
+  collaboratorRoleEnum,
+  collaboratorStatusEnum,
+  sessionItemTypeEnum,
+  goalTypeEnum,
 } from '../modules/sessions/sessions.schema';
-import { dailyLogs } from '../modules/daily-logs/daily-logs.schema';
+import {
+  dailyLogs,
+  dailyLogStatusEnum,
+} from '../modules/daily-logs/daily-logs.schema';
 import { motivationalMessages } from '../modules/motivation/motivation.schema';
+import {
+  notifications,
+  notificationTypeEnum,
+} from '../modules/notifications/notifications.schema';
 
 export {
   users,
@@ -18,12 +29,20 @@ export {
   sessionCollaborators,
   dailyLogs,
   motivationalMessages,
+  notifications,
+  notificationTypeEnum,
+  collaboratorRoleEnum,
+  collaboratorStatusEnum,
+  sessionItemTypeEnum,
+  goalTypeEnum,
+  dailyLogStatusEnum,
 };
 
 export const usersRelations = relations(users, ({ many }) => ({
   habitMasters: many(habitMasters),
   weeklySessions: many(weeklySessions),
   dailyLogs: many(dailyLogs),
+  notifications: many(notifications),
 }));
 
 export const habitMastersRelations = relations(
@@ -90,5 +109,12 @@ export const dailyLogsRelations = relations(dailyLogs, ({ one }) => ({
   sessionItem: one(sessionItems, {
     fields: [dailyLogs.sessionItemId],
     references: [sessionItems.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
   }),
 }));

@@ -1,0 +1,1 @@
+CREATE TYPE "public"."notification_type" AS ENUM('COLLAB_INVITE', 'COLLAB_ACCEPTED', 'SYSTEM_INFO');

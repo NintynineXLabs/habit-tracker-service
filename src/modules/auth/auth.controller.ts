@@ -11,7 +11,7 @@ import { getUserById } from '../users/users.service';
 
 export const googleLogin = async (c: Context) => {
   const { token, code } = await c.req.json();
-  console.log({ token, code });
+
   if (!token && !code) {
     return c.json({ error: 'Token or Code is required' }, 400);
   }
@@ -22,11 +22,14 @@ export const googleLogin = async (c: Context) => {
 
     if (code) {
       const tokens = await exchangeGoogleCode(code);
-      console.log({ tokens });
       payload = await verifyGoogleToken(tokens.id_token!);
       googleRefreshToken = tokens.refresh_token;
     } else {
       payload = await verifyGoogleToken(token);
+    }
+
+    if (!payload) {
+      return c.json({ error: 'Failed to verify token' }, 401);
     }
 
     const user = await findOrCreateUser(payload, googleRefreshToken);

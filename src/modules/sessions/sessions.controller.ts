@@ -96,6 +96,7 @@ export const createSessionCollaboratorController = async (c: Context) => {
 
 // Add collaborator by email
 export const addCollaboratorController = async (c: Context) => {
+  const user = c.get('user');
   const { sessionItemId, email } = await c.req.json();
 
   if (!sessionItemId || !email) {
@@ -105,6 +106,7 @@ export const addCollaboratorController = async (c: Context) => {
   const { collaborator, alreadyExists } = await addCollaboratorByEmail(
     sessionItemId,
     email,
+    user.name,
   );
 
   if (!collaborator) {

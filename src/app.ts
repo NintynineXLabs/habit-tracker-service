@@ -8,6 +8,7 @@ import sessionsRoutes from './modules/sessions/sessions.routes';
 import dailyLogsRoutes from './modules/daily-logs/daily-logs.routes';
 import motivationRoutes from './modules/motivation/motivation.routes';
 import reportsRoutes from './modules/reports/reports.routes';
+import notificationsRoutes from './modules/notifications/notifications.routes';
 import authRoutes from './modules/auth/auth.routes';
 import { authMiddleware } from './middlewares/auth.middleware';
 import { db } from './db';
@@ -91,6 +92,8 @@ app.route('/habits', habitsRoutes);
 app.route('/sessions', sessionsRoutes); // Note: This will prefix /sessions/weekly, /sessions/items, etc.
 app.route('/daily-logs', dailyLogsRoutes);
 app.route('/motivation', motivationRoutes);
+
 app.route('/reports', reportsRoutes);
+app.route('/notifications', notificationsRoutes);
 
 export default app;
