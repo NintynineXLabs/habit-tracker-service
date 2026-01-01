@@ -9,11 +9,51 @@ export const createNotification = async (data: NewNotification) => {
   return result[0];
 };
 
-export const getUserNotifications = async (userId: string) => {
-  return await db.query.notifications.findMany({
-    where: (notifications, { eq }) => eq(notifications.userId, userId),
-    orderBy: [desc(notifications.createdAt)],
-  });
+export interface PaginationOptions {
+  page?: number;
+  limit?: number;
+  unreadOnly?: boolean;
+}
+
+export const getUserNotifications = async (
+  userId: string,
+  options: PaginationOptions = {},
+) => {
+  const { page = 1, limit = 10, unreadOnly = false } = options;
+  const offset = (page - 1) * limit;
+
+  const whereCondition = unreadOnly
+    ? and(eq(notifications.userId, userId), eq(notifications.isRead, false))
+    : eq(notifications.userId, userId);
+
+  // Get total count
+  const totalResult = await db
+    .select({ count: count() })
+    .from(notifications)
+    .where(whereCondition);
+  const total = totalResult[0]?.count || 0;
+
+  // Get paginated data
+  const data = await db
+    .select()
+    .from(notifications)
+    .where(whereCondition)
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  const hasMore = offset + data.length < total;
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total,
+      hasMore,
+      nextPage: hasMore ? page + 1 : null,
+    },
+  };
 };
 
 export const markNotificationAsRead = async (id: number, userId: string) => {

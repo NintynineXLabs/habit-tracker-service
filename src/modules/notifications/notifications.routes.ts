@@ -12,16 +12,39 @@ const app = new OpenAPIHono();
 const getNotificationsRoute = createRoute({
   method: 'get',
   path: '/',
+  request: {
+    query: z.object({
+      unreadOnly: z
+        .string()
+        .optional()
+        .transform((val) => val === 'true'),
+      page: z
+        .string()
+        .optional()
+        .transform((val) => (val ? parseInt(val, 10) : 1)),
+      limit: z
+        .string()
+        .optional()
+        .transform((val) => (val ? parseInt(val, 10) : 10)),
+    }),
+  },
   responses: {
     200: {
       content: {
         'application/json': {
           schema: z.object({
             data: z.array(selectNotificationSchema),
+            meta: z.object({
+              page: z.number(),
+              limit: z.number(),
+              total: z.number(),
+              hasMore: z.boolean(),
+              nextPage: z.number().nullable(),
+            }),
           }),
         },
       },
-      description: 'Retrieve all notifications for the current user',
+      description: 'Retrieve paginated notifications for the current user',
     },
   },
 });

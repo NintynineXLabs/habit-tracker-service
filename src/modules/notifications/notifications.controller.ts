@@ -3,10 +3,16 @@ import * as notificationService from './notifications.service';
 
 export const getNotifications = async (c: Context) => {
   const user = c.get('user');
-  const notifications = await notificationService.getUserNotifications(
-    user.sub,
-  );
-  return c.json({ data: notifications }, 200);
+  const unreadOnly = c.req.query('unreadOnly') === 'true';
+  const page = parseInt(c.req.query('page') || '1', 10);
+  const limit = parseInt(c.req.query('limit') || '10', 10);
+
+  const result = await notificationService.getUserNotifications(user.sub, {
+    page,
+    limit,
+    unreadOnly,
+  });
+  return c.json(result, 200);
 };
 
 export const markAsRead = async (c: Context) => {
