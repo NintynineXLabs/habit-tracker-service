@@ -16,7 +16,9 @@ export const reportMetaSchema = z.object({
 export const weeklyActivitySchema = z.object({
   labels: z.array(z.string()), // ["Sat", "Sun", "Mon", ...]
   dates: z.array(z.string()), // ["2025-02-18", "2025-02-19", ...]
-  data: z.array(z.number().int().min(0)), // [5, 2, 0, 8, ...]
+  data: z.array(z.number().int().min(0)), // Completed counts [5, 2, 0, 8, ...]
+  total: z.array(z.number().int().min(0)), // Total tasks per day
+  completionRate: z.array(z.number().min(0).max(100)), // Percentage per day
 });
 
 // Category Distribution schema (Pie Chart data)
@@ -36,13 +38,22 @@ export const heatmapItemSchema = z.tuple([
 
 export const consistencyHeatmapSchema = z.array(heatmapItemSchema);
 
+// Collaborator Summary schema (used by both weekly and daily summaries)
+export const collaboratorSummarySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string(),
+  picture: z.string().nullable(),
+  completedTogether: z.number().int().min(0),
+});
+
 // Main Weekly Summary Response Schema
 export const weeklySummaryResponseSchema = toOpenApi(
   z.object({
-    meta: reportMetaSchema,
     weeklyActivity: weeklyActivitySchema,
     categoryDistribution: categoryDistributionSchema,
     consistencyHeatmap: consistencyHeatmapSchema,
+    collaborators: z.array(collaboratorSummarySchema),
   }),
   {
     description:
@@ -127,22 +138,6 @@ export const timeInsightsSchema = z.object({
   longestActivity: longestActivitySchema,
 });
 
-// Collaborator Summary schema
-export const collaboratorSummarySchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  email: z.string(),
-  picture: z.string().nullable(),
-  completedTogether: z.number().int().min(0),
-});
-
-// Social Context schema
-export const socialContextSchema = z.object({
-  collaborators: z.array(collaboratorSummarySchema),
-  dailyQuote: z.string(),
-  quoteColorInfo: z.enum(['success', 'info', 'neutral']),
-});
-
 // Main Daily Summary Response Schema
 export const dailySummaryResponseSchema = toOpenApi(
   z.object({
@@ -150,11 +145,10 @@ export const dailySummaryResponseSchema = toOpenApi(
     achievement: achievementSchema,
     statusBreakdown: statusBreakdownSchema,
     timeInsights: timeInsightsSchema,
-    social: socialContextSchema,
   }),
   {
     description:
-      'Daily Summary Report with achievement, breakdown, insights, and social context',
+      'Daily Summary Report with achievement, breakdown, and insights',
     example: {
       date: '2024-12-29',
       achievement: {
@@ -221,5 +215,5 @@ export type StatusBreakdown = z.infer<typeof statusBreakdownSchema>;
 export type TimeInsights = z.infer<typeof timeInsightsSchema>;
 export type LongestActivity = z.infer<typeof longestActivitySchema>;
 export type CollaboratorSummary = z.infer<typeof collaboratorSummarySchema>;
-export type SocialContext = z.infer<typeof socialContextSchema>;
+// export type SocialContext = z.infer<typeof socialContextSchema>;
 export type DailySummaryResponse = z.infer<typeof dailySummaryResponseSchema>;

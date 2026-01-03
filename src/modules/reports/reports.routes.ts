@@ -20,6 +20,11 @@ const getWeeklySummaryRoute = createRoute({
         description: 'Reference date in YYYY-MM-DD format (defaults to today)',
         example: '2025-02-24',
       }),
+      timezone: z.string().optional().openapi({
+        description:
+          'IANA timezone string for calculating today (e.g., Asia/Jakarta)',
+        example: 'Asia/Jakarta',
+      }),
     }),
   },
   responses: {
@@ -44,6 +49,11 @@ const getDailySummaryRoute = createRoute({
       date: z.string().openapi({
         description: 'Date in YYYY-MM-DD format',
         example: '2024-12-29',
+      }),
+      timezone: z.string().optional().openapi({
+        description:
+          'IANA timezone string for timezone context (e.g., Asia/Jakarta)',
+        example: 'Asia/Jakarta',
       }),
     }),
   },

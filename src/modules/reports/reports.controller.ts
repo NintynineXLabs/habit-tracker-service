@@ -3,17 +3,19 @@ import {
   getWeeklySummaryReport,
   getDailySummaryReport,
 } from './reports.service';
+import { getTodayInTimezone } from '../../utils/date-helper';
 
 /**
  * Controller for getting weekly summary report
- * GET /reports/weekly?date=YYYY-MM-DD
+ * GET /reports/weekly?date=YYYY-MM-DD&timezone=Asia/Jakarta
  */
 export const getWeeklySummaryController = async (c: Context) => {
   const user = c.get('user');
   const dateParam = c.req.query('date');
+  const timezone = c.req.query('timezone');
 
-  // Default to today if no date provided
-  const date = dateParam || new Date().toISOString().split('T')[0]!;
+  // Use timezone-aware today if no date provided
+  const date = dateParam || getTodayInTimezone(timezone);
 
   const summary = await getWeeklySummaryReport(user.sub, date);
 

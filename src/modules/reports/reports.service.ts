@@ -1,13 +1,12 @@
 import { and, eq, isNull, sql, gte, lte } from 'drizzle-orm';
 import { db } from '../../db';
-import { dailyLogs } from '../daily-logs/daily-logs.schema';
+import { dailyLogs, DAILY_LOG_STATUS } from '../daily-logs/daily-logs.schema';
 import {
   sessionItems,
   sessionCollaborators,
 } from '../sessions/sessions.schema';
 import { habitMasters } from '../habits/habits.schema';
 import { users } from '../users/users.schema';
-import { getDynamicMotivation } from '../motivation/motivation.service';
 import type {
   ReportMeta,
   WeeklyActivity,
@@ -17,78 +16,15 @@ import type {
   Achievement,
   StatusBreakdown,
   TimeInsights,
-  SocialContext,
   DailySummaryResponse,
   CollaboratorSummary,
 } from './reports.schema';
-
-// =====================
-// HELPER FUNCTIONS
-// =====================
-
-/**
- * Day names for labeling
- */
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-/**
- * Format date to YYYY-MM-DD string
- */
-const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0]!;
-};
-
-/**
- * Get the day name from a date
- */
-const getDayName = (date: Date): string => {
-  return DAY_NAMES[date.getDay()]!;
-};
-
-/**
- * Generate array of dates for the last N days (including today)
- */
-const getDateRange = (referenceDate: string, days: number): string[] => {
-  const dates: string[] = [];
-  const refDate = new Date(referenceDate);
-
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(refDate);
-    date.setDate(refDate.getDate() - i);
-    dates.push(formatDate(date));
-  }
-
-  return dates;
-};
-
-/**
- * Determine time period from HH:MM format
- */
-const getTimePeriod = (
-  time: string,
-): 'morning' | 'afternoon' | 'evening' | 'night' => {
-  const hour = parseInt(time.split(':')[0] || '0', 10);
-
-  if (hour >= 6 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 21) return 'evening';
-  return 'night';
-};
-
-/**
- * Get label for time period
- */
-const getTimePeriodLabel = (
-  period: 'morning' | 'afternoon' | 'evening' | 'night',
-): string => {
-  const labels = {
-    morning: 'Pagi (06:00 - 12:00)',
-    afternoon: 'Siang (12:00 - 17:00)',
-    evening: 'Sore (17:00 - 21:00)',
-    night: 'Malam (21:00 - 06:00)',
-  };
-  return labels[period];
-};
+import {
+  getDayName,
+  getDateRange,
+  getTimePeriod,
+  getTimePeriodLabel,
+} from '../../utils/date-helper';
 
 // =====================
 // WEEKLY SUMMARY SERVICES
@@ -124,7 +60,7 @@ export const getReportMeta = async (
       and(
         eq(dailyLogs.userId, userId),
         eq(dailyLogs.date, date),
-        eq(dailyLogs.status, 'completed'),
+        eq(dailyLogs.status, DAILY_LOG_STATUS[2]), // 'completed'
         isNull(dailyLogs.deletedAt),
       ),
     );
@@ -144,7 +80,7 @@ export const getReportMeta = async (
 
 /**
  * Get Weekly Activity data (Rolling 7 days)
- * Returns labels, dates, and data arrays for bar chart
+ * Returns labels, dates, completed counts, total counts, and completion rate
  */
 export const getWeeklyActivity = async (
   userId: string,
@@ -155,11 +91,12 @@ export const getWeeklyActivity = async (
   const startDate = dates[0]!;
   const endDate = dates[dates.length - 1]!;
 
-  // Query completed counts per date
-  const completedCounts = await db
+  // Single optimized query: get total and completed counts per date
+  const dailyCounts = await db
     .select({
       date: dailyLogs.date,
-      count: sql<number>`count(*)`,
+      total: sql<number>`count(*)`,
+      completed: sql<number>`sum(case when ${dailyLogs.status} = ${DAILY_LOG_STATUS[2]} then 1 else 0 end)`,
     })
     .from(dailyLogs)
     .where(
@@ -167,32 +104,46 @@ export const getWeeklyActivity = async (
         eq(dailyLogs.userId, userId),
         gte(dailyLogs.date, startDate),
         lte(dailyLogs.date, endDate),
-        eq(dailyLogs.status, 'completed'),
         isNull(dailyLogs.deletedAt),
       ),
     )
     .groupBy(dailyLogs.date);
 
   // Create a map for quick lookup
-  const countMap = new Map<string, number>();
-  for (const row of completedCounts) {
-    countMap.set(row.date, Number(row.count));
+  const countMap = new Map<string, { total: number; completed: number }>();
+  for (const row of dailyCounts) {
+    countMap.set(row.date, {
+      total: Number(row.total),
+      completed: Number(row.completed),
+    });
   }
 
   // Build response arrays with zero-filling
   const labels: string[] = [];
   const data: number[] = [];
+  const total: number[] = [];
+  const completionRate: number[] = [];
 
   for (const dateStr of dates) {
     const date = new Date(dateStr);
+    const counts = countMap.get(dateStr);
+
     labels.push(getDayName(date));
-    data.push(countMap.get(dateStr) || 0);
+    data.push(counts?.completed || 0);
+    total.push(counts?.total || 0);
+    completionRate.push(
+      counts && counts.total > 0
+        ? Math.round((counts.completed / counts.total) * 100)
+        : 0,
+    );
   }
 
   return {
     labels,
     dates,
     data,
+    total,
+    completionRate,
   };
 };
 
@@ -223,7 +174,7 @@ export const getCategoryDistribution = async (
         eq(dailyLogs.userId, userId),
         gte(dailyLogs.date, startDate),
         lte(dailyLogs.date, endDate),
-        eq(dailyLogs.status, 'completed'),
+        eq(dailyLogs.status, DAILY_LOG_STATUS[2]), // 'completed'
         isNull(dailyLogs.deletedAt),
       ),
     )
@@ -249,20 +200,17 @@ export const getConsistencyHeatmap = async (
   userId: string,
   referenceDate: string,
 ): Promise<ConsistencyHeatmap> => {
-  // Get the start and end of the current month
-  const refDate = new Date(referenceDate);
-  const startOfMonth = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
-  const endOfMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0);
-
-  const startDate = formatDate(startOfMonth);
-  const endDate = formatDate(endOfMonth);
+  // Generate 30 days range ending at referenceDate
+  const dates = getDateRange(referenceDate, 30);
+  const startDate = dates[0]!;
+  const endDate = dates[dates.length - 1]!;
 
   // Query total and completed counts per date
   const dailyCounts = await db
     .select({
       date: dailyLogs.date,
       total: sql<number>`count(*)`,
-      completed: sql<number>`sum(case when ${dailyLogs.status} = 'completed' then 1 else 0 end)`,
+      completed: sql<number>`sum(case when ${dailyLogs.status} = ${DAILY_LOG_STATUS[2]} then 1 else 0 end)`,
     })
     .from(dailyLogs)
     .where(
@@ -275,24 +223,97 @@ export const getConsistencyHeatmap = async (
     )
     .groupBy(dailyLogs.date);
 
-  // Calculate score for each day
+  // Create a map for quick lookup of query results
+  const countMap = new Map<string, { total: number; completed: number }>();
+  for (const row of dailyCounts) {
+    countMap.set(row.date, {
+      total: Number(row.total),
+      completed: Number(row.completed),
+    });
+  }
+
+  // Generate all dates in the range and build the heatmap
   const heatmap: ConsistencyHeatmap = [];
 
-  for (const row of dailyCounts) {
-    const total = Number(row.total);
-    const completed = Number(row.completed);
+  for (const dateStr of dates) {
+    const data = countMap.get(dateStr);
 
-    // Only include days with tasks
-    if (total > 0) {
-      const score = Math.round((completed / total) * 10);
-      heatmap.push([row.date, score]);
+    let percentage = 0;
+    if (data && data.total > 0) {
+      percentage = Math.round((data.completed / data.total) * 100);
+    }
+
+    heatmap.push([dateStr, percentage]);
+  }
+
+  return heatmap;
+};
+
+/**
+ * Get all-time collaborators for a user
+ * Returns list of users who have collaborated across all collaborative sessions
+ */
+const getAllTimeCollaborators = async (
+  userId: string,
+): Promise<CollaboratorSummary[]> => {
+  const collaboratorData = await db
+    .select({
+      collaboratorUserId: sessionCollaborators.collaboratorUserId,
+      userName: users.name,
+      userEmail: users.email,
+      userPicture: users.picture,
+      sessionItemId: dailyLogs.sessionItemId,
+      status: dailyLogs.status,
+    })
+    .from(dailyLogs)
+    .innerJoin(sessionItems, eq(dailyLogs.sessionItemId, sessionItems.id))
+    .innerJoin(
+      sessionCollaborators,
+      eq(sessionItems.id, sessionCollaborators.sessionItemId),
+    )
+    .leftJoin(users, eq(sessionCollaborators.collaboratorUserId, users.id))
+    .where(
+      and(
+        eq(dailyLogs.userId, userId),
+        eq(sessionItems.goalType, 'collaborative'),
+        eq(sessionCollaborators.status, 'accepted'),
+        isNull(dailyLogs.deletedAt),
+        isNull(sessionCollaborators.deletedAt),
+      ),
+    );
+
+  // Group collaborators and count all completed activities together
+  const collaboratorMap = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      email: string;
+      picture: string | null;
+      completedTogether: number;
+    }
+  >();
+
+  for (const row of collaboratorData) {
+    if (row.collaboratorUserId && row.collaboratorUserId !== userId) {
+      const existing = collaboratorMap.get(row.collaboratorUserId);
+      if (existing) {
+        if (row.status === DAILY_LOG_STATUS[2]) {
+          existing.completedTogether++;
+        }
+      } else {
+        collaboratorMap.set(row.collaboratorUserId, {
+          id: row.collaboratorUserId,
+          name: row.userName || 'Unknown',
+          email: row.userEmail || '',
+          picture: row.userPicture,
+          completedTogether: row.status === DAILY_LOG_STATUS[2] ? 1 : 0,
+        });
+      }
     }
   }
 
-  // Sort by date
-  heatmap.sort((a, b) => a[0].localeCompare(b[0]));
-
-  return heatmap;
+  return Array.from(collaboratorMap.values());
 };
 
 /**
@@ -303,19 +324,23 @@ export const getWeeklySummaryReport = async (
   date: string,
 ): Promise<WeeklySummaryResponse> => {
   // Get all sections in parallel
-  const [meta, weeklyActivity, categoryDistribution, consistencyHeatmap] =
-    await Promise.all([
-      getReportMeta(userId, date),
-      getWeeklyActivity(userId, date),
-      getCategoryDistribution(userId, date),
-      getConsistencyHeatmap(userId, date),
-    ]);
-
-  return {
-    meta,
+  const [
     weeklyActivity,
     categoryDistribution,
     consistencyHeatmap,
+    collaborators,
+  ] = await Promise.all([
+    getWeeklyActivity(userId, date),
+    getCategoryDistribution(userId, date),
+    getConsistencyHeatmap(userId, date),
+    getAllTimeCollaborators(userId),
+  ]);
+
+  return {
+    weeklyActivity,
+    categoryDistribution,
+    consistencyHeatmap,
+    collaborators,
   };
 };
 
@@ -353,7 +378,7 @@ export const getAchievementSummary = async (
       and(
         eq(dailyLogs.userId, userId),
         eq(dailyLogs.date, date),
-        eq(dailyLogs.status, 'completed'),
+        eq(dailyLogs.status, DAILY_LOG_STATUS[2]), // 'completed'
         isNull(dailyLogs.deletedAt),
       ),
     );
@@ -479,7 +504,7 @@ export const getTimeInsights = async (
       and(
         eq(dailyLogs.userId, userId),
         eq(dailyLogs.date, date),
-        eq(dailyLogs.status, 'completed'),
+        eq(dailyLogs.status, DAILY_LOG_STATUS[2]), // 'completed'
         isNull(dailyLogs.deletedAt),
       ),
     );
@@ -556,96 +581,6 @@ export const getTimeInsights = async (
 };
 
 /**
- * Get social context for a user on a specific date
- * Includes collaborators worked with and daily motivational quote
- */
-export const getSocialContext = async (
-  userId: string,
-  date: string,
-  completionRate: number,
-): Promise<SocialContext> => {
-  // Find collaborators from completed collaborative tasks
-  const collaboratorData = await db
-    .select({
-      collaboratorUserId: sessionCollaborators.collaboratorUserId,
-      userName: users.name,
-      userEmail: users.email,
-      userPicture: users.picture,
-      sessionItemId: dailyLogs.sessionItemId,
-      status: dailyLogs.status,
-    })
-    .from(dailyLogs)
-    .innerJoin(sessionItems, eq(dailyLogs.sessionItemId, sessionItems.id))
-    .innerJoin(
-      sessionCollaborators,
-      eq(sessionItems.id, sessionCollaborators.sessionItemId),
-    )
-    .leftJoin(users, eq(sessionCollaborators.collaboratorUserId, users.id))
-    .where(
-      and(
-        eq(dailyLogs.userId, userId),
-        eq(dailyLogs.date, date),
-        eq(sessionItems.goalType, 'collaborative'),
-        eq(sessionCollaborators.status, 'accepted'),
-        isNull(dailyLogs.deletedAt),
-        isNull(sessionCollaborators.deletedAt),
-      ),
-    );
-
-  // Group collaborators and count completed activities together
-  const collaboratorMap = new Map<
-    string,
-    {
-      id: string;
-      name: string;
-      email: string;
-      picture: string | null;
-      completedTogether: number;
-    }
-  >();
-
-  for (const row of collaboratorData) {
-    if (row.collaboratorUserId && row.collaboratorUserId !== userId) {
-      const existing = collaboratorMap.get(row.collaboratorUserId);
-      if (existing) {
-        if (row.status === 'completed') {
-          existing.completedTogether++;
-        }
-      } else {
-        collaboratorMap.set(row.collaboratorUserId, {
-          id: row.collaboratorUserId,
-          name: row.userName || 'Unknown',
-          email: row.userEmail || '',
-          picture: row.userPicture,
-          completedTogether: row.status === 'completed' ? 1 : 0,
-        });
-      }
-    }
-  }
-
-  const collaborators: CollaboratorSummary[] = Array.from(
-    collaboratorMap.values(),
-  );
-
-  // Get motivational quote based on completion rate
-  const dailyQuote = await getDynamicMotivation(completionRate);
-
-  // Determine color info based on completion rate
-  const quoteColorInfo: 'success' | 'info' | 'neutral' =
-    completionRate === 100
-      ? 'success'
-      : completionRate > 0
-        ? 'info'
-        : 'neutral';
-
-  return {
-    collaborators,
-    dailyQuote,
-    quoteColorInfo,
-  };
-};
-
-/**
  * Get complete daily summary report for a user on a specific date
  */
 export const getDailySummaryReport = async (
@@ -659,18 +594,10 @@ export const getDailySummaryReport = async (
     getTimeInsights(userId, date),
   ]);
 
-  // Social context needs completion rate from achievement
-  const social = await getSocialContext(
-    userId,
-    date,
-    achievement.completionRate,
-  );
-
   return {
     date,
     achievement,
     statusBreakdown,
     timeInsights,
-    social,
   };
 };
