@@ -1,4 +1,4 @@
-import { eq, desc, and, count } from 'drizzle-orm';
+import { eq, desc, and, count, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { notifications } from './notifications.schema';
 
@@ -23,8 +23,12 @@ export const getUserNotifications = async (
   const offset = (page - 1) * limit;
 
   const whereCondition = unreadOnly
-    ? and(eq(notifications.userId, userId), eq(notifications.isRead, false))
-    : eq(notifications.userId, userId);
+    ? and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, false),
+        isNull(notifications.deletedAt),
+      )
+    : and(eq(notifications.userId, userId), isNull(notifications.deletedAt));
 
   // Get total count
   const totalResult = await db
@@ -60,7 +64,28 @@ export const markNotificationAsRead = async (id: number, userId: string) => {
   const result = await db
     .update(notifications)
     .set({ isRead: true })
-    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
+    .where(
+      and(
+        eq(notifications.id, id),
+        eq(notifications.userId, userId),
+        isNull(notifications.deletedAt),
+      ),
+    )
+    .returning();
+  return result[0];
+};
+
+export const deleteNotification = async (id: number, userId: string) => {
+  const result = await db
+    .update(notifications)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(notifications.id, id),
+        eq(notifications.userId, userId),
+        isNull(notifications.deletedAt),
+      ),
+    )
     .returning();
   return result[0];
 };
@@ -70,7 +95,11 @@ export const getUnreadCount = async (userId: string) => {
     .select({ count: count() })
     .from(notifications)
     .where(
-      and(eq(notifications.userId, userId), eq(notifications.isRead, false)),
+      and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, false),
+        isNull(notifications.deletedAt),
+      ),
     );
   return result[0]?.count || 0;
 };
@@ -80,7 +109,11 @@ export const markAllNotificationsAsRead = async (userId: string) => {
     .update(notifications)
     .set({ isRead: true })
     .where(
-      and(eq(notifications.userId, userId), eq(notifications.isRead, false)),
+      and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, false),
+        isNull(notifications.deletedAt),
+      ),
     );
 };
 

@@ -38,3 +38,15 @@ export const markAllAsRead = async (c: Context) => {
   await notificationService.markAllNotificationsAsRead(user.sub);
   return c.json({ message: 'All notifications marked as read' }, 200);
 };
+
+export const deleteNotification = async (c: Context) => {
+  const user = c.get('user');
+  const id = parseInt(c.req.param('id'));
+
+  if (isNaN(id)) {
+    return c.json({ error: 'Invalid ID' }, 400);
+  }
+
+  await notificationService.deleteNotification(id, user.sub);
+  return c.json({ success: true });
+};

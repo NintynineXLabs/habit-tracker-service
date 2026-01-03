@@ -5,6 +5,7 @@ import {
   getUnreadCount,
   markAllAsRead,
   markAsRead,
+  deleteNotification,
 } from './notifications.controller';
 
 const app = new OpenAPIHono();
@@ -110,9 +111,35 @@ const markAllAsReadRoute = createRoute({
   },
 });
 
+const deleteNotificationRoute = createRoute({
+  method: 'delete',
+  path: '/:id',
+  request: {
+    params: z.object({
+      id: z.string().transform((val) => parseInt(val, 10)),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.boolean(),
+          }),
+        },
+      },
+      description: 'Delete notification',
+    },
+    400: {
+      description: 'Invalid ID',
+    },
+  },
+});
+
 app.openapi(getNotificationsRoute, getNotifications);
 app.openapi(getUnreadCountRoute, getUnreadCount);
 app.openapi(markAsReadRoute, markAsRead);
 app.openapi(markAllAsReadRoute, markAllAsRead);
+app.openapi(deleteNotificationRoute, deleteNotification);
 
 export default app;

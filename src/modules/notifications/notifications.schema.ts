@@ -31,6 +31,7 @@ export const notifications = pgTable('notifications', {
   isRead: boolean('is_read').default(false).notNull(),
   metadata: jsonb('metadata'), // { sessionItemId: "...", inviterName: "..." }
   createdAt: timestamp('created_at').defaultNow(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const insertNotificationSchema = toOpenApi(
