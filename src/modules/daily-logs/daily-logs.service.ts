@@ -16,10 +16,7 @@ export const getDailyLogsByUserId = async (userId: string, date: string) => {
         eq(dailyLogs.date, date),
         isNull(dailyLogs.deletedAt),
       ),
-    orderBy: (dailyLogs, { asc }) => [
-      asc(dailyLogs.weeklySessionId),
-      asc(dailyLogs.startTime),
-    ],
+    orderBy: (dailyLogs, { asc }) => [asc(dailyLogs.startTime)],
     with: {
       sessionItem: {
         columns: {
