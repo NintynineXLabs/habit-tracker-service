@@ -17,6 +17,7 @@ export const collaboratorStatusEnum = pgEnum('collaborator_status', [
   'invited',
   'accepted',
   'rejected',
+  'left',
 ]);
 
 // Enum for collaborator role

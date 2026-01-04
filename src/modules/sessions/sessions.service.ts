@@ -329,7 +329,7 @@ export const removeCollaborator = async (collaboratorId: string) => {
 // Update collaborator status (accept/reject invitation)
 export const updateCollaboratorStatus = async (
   collaboratorId: string,
-  status: 'accepted' | 'rejected',
+  status: 'accepted' | 'rejected' | 'left',
   userId?: string,
 ) => {
   const updateData: Record<string, unknown> = { status };
@@ -339,6 +339,9 @@ export const updateCollaboratorStatus = async (
     if (userId) {
       updateData.collaboratorUserId = userId;
     }
+  } else if (status === 'left') {
+    // When leaving, we don't delete the record, just update status
+    // The user is effectively "gone" but history remains
   }
 
   const result = await db
@@ -377,6 +380,45 @@ export const updateCollaboratorStatus = async (
         message: `${
           acceptor?.name || 'Seorang pengguna'
         } telah menerima undangan kolaborasimu.`,
+        metadata: {
+          sessionItemId: updatedCollaborator.sessionItemId,
+          collaboratorId: updatedCollaborator.id,
+          habitName: sessionItem?.habitMaster?.name || null,
+          sessionName: sessionItem?.session?.name || null,
+          dayOfWeek: sessionItem?.session?.dayOfWeek ?? null,
+          startTime: sessionItem?.startTime || null,
+        },
+      });
+    }
+  }
+
+  // If left, notify the owner
+  if (status === 'left' && updatedCollaborator) {
+    const sessionItem = await db.query.sessionItems.findFirst({
+      where: (items, { eq }) => eq(items.id, updatedCollaborator.sessionItemId),
+      with: {
+        habitMaster: true,
+        session: true,
+        collaborators: {
+          where: (collabs, { eq }) => eq(collabs.role, 'owner'),
+        },
+      },
+    });
+
+    const owner = sessionItem?.collaborators[0];
+    if (owner && owner.collaboratorUserId) {
+      // Get leaver name
+      const leaver = await db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.id, userId!),
+      });
+
+      await createNotification({
+        userId: owner.collaboratorUserId,
+        type: 'COLLAB_ACCEPTED', // Re-using this type or we might need a new one like COLLAB_LEFT
+        title: 'Collaborator Keluar',
+        message: `${
+          leaver?.name || 'Seorang pengguna'
+        } telah meninggalkan sesi kolaborasi.`,
         metadata: {
           sessionItemId: updatedCollaborator.sessionItemId,
           collaboratorId: updatedCollaborator.id,

@@ -438,7 +438,7 @@ const updateCollaboratorStatusRoute = createRoute({
       content: {
         'application/json': {
           schema: z.object({
-            status: z.enum(['accepted', 'rejected']).openapi({
+            status: z.enum(['accepted', 'rejected', 'left']).openapi({
               description: 'New status for the invitation',
               example: 'accepted',
             }),

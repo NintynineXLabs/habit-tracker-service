@@ -162,8 +162,11 @@ export const updateCollaboratorStatusController = async (c: Context) => {
     return c.json({ error: 'collaboratorId and status are required' }, 400);
   }
 
-  if (status !== 'accepted' && status !== 'rejected') {
-    return c.json({ error: 'status must be "accepted" or "rejected"' }, 400);
+  if (status !== 'accepted' && status !== 'rejected' && status !== 'left') {
+    return c.json(
+      { error: 'status must be "accepted", "rejected", or "left"' },
+      400,
+    );
   }
 
   const result = await updateCollaboratorStatus(
