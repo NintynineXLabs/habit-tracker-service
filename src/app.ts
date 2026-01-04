@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import usersRoutes from './modules/users/users.routes';
 import habitsRoutes from './modules/habits/habits.routes';
+import templatesRoutes from './modules/habits/templates.routes';
 import sessionsRoutes from './modules/sessions/sessions.routes';
 import dailyLogsRoutes from './modules/daily-logs/daily-logs.routes';
 import motivationRoutes from './modules/motivation/motivation.routes';
@@ -89,6 +90,7 @@ app.use('/*', async (c, next) => {
 // Mount Modules
 app.route('/users', usersRoutes);
 app.route('/habits', habitsRoutes);
+app.route('/templates', templatesRoutes);
 app.route('/sessions', sessionsRoutes); // Note: This will prefix /sessions/weekly, /sessions/items, etc.
 app.route('/daily-logs', dailyLogsRoutes);
 app.route('/motivation', motivationRoutes);

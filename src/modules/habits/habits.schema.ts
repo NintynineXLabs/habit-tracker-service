@@ -50,3 +50,49 @@ export const selectHabitMasterSchema = toOpenApi(
 export type HabitMaster = z.infer<typeof selectHabitMasterSchema>;
 export type NewHabitMaster = typeof habitMasters.$inferInsert;
 export type UpdateHabitRequest = Partial<Omit<NewHabitMaster, 'userId'>>;
+
+export const habitTemplates = pgTable('habit_templates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  description: text('description'),
+  category: text('category'),
+  iconName: text('icon_name'),
+  iconBackgroundColor: text('icon_background_color'),
+  iconColor: text('icon_color'),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export const templateItems = pgTable('template_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  templateId: uuid('template_id')
+    .references(() => habitTemplates.id)
+    .notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  category: text('category'),
+  iconName: text('icon_name'),
+  iconBackgroundColor: text('icon_background_color'),
+  iconColor: text('icon_color'),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export const selectHabitTemplateSchema = toOpenApi(
+  createSelectSchema(habitTemplates, {
+    deletedAt: z.string().nullable(),
+  }),
+  {
+    description: 'Schema for selecting a habit template',
+  },
+);
+
+export const selectTemplateItemSchema = toOpenApi(
+  createSelectSchema(templateItems, {
+    deletedAt: z.string().nullable(),
+  }),
+  {
+    description: 'Schema for selecting a template item',
+  },
+);
+
+export type HabitTemplate = z.infer<typeof selectHabitTemplateSchema>;
+export type TemplateItem = z.infer<typeof selectTemplateItemSchema>;

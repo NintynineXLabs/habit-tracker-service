@@ -1,7 +1,11 @@
 import { relations } from 'drizzle-orm';
 
 import { users } from '../modules/users/users.schema';
-import { habitMasters } from '../modules/habits/habits.schema';
+import {
+  habitMasters,
+  habitTemplates,
+  templateItems,
+} from '../modules/habits/habits.schema';
 import {
   weeklySessions,
   sessionItems,
@@ -24,6 +28,8 @@ import {
 export {
   users,
   habitMasters,
+  habitTemplates,
+  templateItems,
   weeklySessions,
   sessionItems,
   sessionCollaborators,
@@ -116,5 +122,18 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, {
     fields: [notifications.userId],
     references: [users.id],
+  }),
+}));
+export const habitTemplatesRelations = relations(
+  habitTemplates,
+  ({ many }) => ({
+    items: many(templateItems),
+  }),
+);
+
+export const templateItemsRelations = relations(templateItems, ({ one }) => ({
+  template: one(habitTemplates, {
+    fields: [templateItems.templateId],
+    references: [habitTemplates.id],
   }),
 }));
