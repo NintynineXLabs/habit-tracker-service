@@ -50,3 +50,9 @@ export const deleteNotification = async (c: Context) => {
   await notificationService.deleteNotification(id, user.sub);
   return c.json({ success: true });
 };
+
+export const deleteAllNotifications = async (c: Context) => {
+  const user = c.get('user');
+  await notificationService.deleteAllNotifications(user.sub);
+  return c.json({ success: true }, 200);
+};

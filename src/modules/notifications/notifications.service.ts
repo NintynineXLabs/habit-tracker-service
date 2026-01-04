@@ -90,6 +90,17 @@ export const deleteNotification = async (id: number, userId: string) => {
   return result[0];
 };
 
+export const deleteAllNotifications = async (userId: string) => {
+  const result = await db
+    .update(notifications)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(eq(notifications.userId, userId), isNull(notifications.deletedAt)),
+    )
+    .returning();
+  return result;
+};
+
 export const getUnreadCount = async (userId: string) => {
   const result = await db
     .select({ count: count() })
