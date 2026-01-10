@@ -247,31 +247,49 @@ export const addCollaboratorByEmail = async (
       ),
   });
 
-  if (existingCollaborator) {
-    return { collaborator: existingCollaborator, alreadyExists: true };
-  }
-
   // Lookup user by email
   const existingUser = await db.query.users.findFirst({
     where: (users, { eq }) => eq(users.email, email),
   });
 
-  // Create collaborator entry
-  const result = await db
-    .insert(sessionCollaborators)
-    .values({
-      sessionItemId,
-      collaboratorUserId: existingUser?.id || null, // Null if user not registered
-      email,
-      status: 'invited',
-      role: 'member',
-      invitedAt: new Date(),
-      joinedAt: null,
-    })
-    .returning();
+  let collaborator;
+  let isNewInvite = false;
 
-  // Trigger Notification if user exists
-  if (existingUser && result[0]) {
+  if (existingCollaborator) {
+    if (existingCollaborator.status === 'left') {
+      const result = await db
+        .update(sessionCollaborators)
+        .set({
+          status: 'invited',
+          invitedAt: new Date(),
+        })
+        .where(eq(sessionCollaborators.id, existingCollaborator.id))
+        .returning();
+      collaborator = result[0];
+      isNewInvite = true;
+    } else {
+      return { collaborator: existingCollaborator, alreadyExists: true };
+    }
+  } else {
+    // Create collaborator entry
+    const result = await db
+      .insert(sessionCollaborators)
+      .values({
+        sessionItemId,
+        collaboratorUserId: existingUser?.id || null, // Null if user not registered
+        email,
+        status: 'invited',
+        role: 'member',
+        invitedAt: new Date(),
+        joinedAt: null,
+      })
+      .returning();
+    collaborator = result[0];
+    isNewInvite = true;
+  }
+
+  // Trigger Notification if user exists and it's a new invite (or re-invite)
+  if (isNewInvite && existingUser && collaborator) {
     // Fetch session item details for richer notification
     const sessionItemDetails = await db.query.sessionItems.findFirst({
       where: (items, { eq }) => eq(items.id, sessionItemId),
@@ -290,7 +308,7 @@ export const addCollaboratorByEmail = async (
       } mengundangmu untuk bergabung dalam sesi habit ini.`,
       metadata: {
         sessionItemId,
-        inviteId: result[0].id,
+        inviteId: collaborator.id,
         habitName: sessionItemDetails?.habitMaster?.name || null,
         sessionName: sessionItemDetails?.session?.name || null,
         dayOfWeek: sessionItemDetails?.session?.dayOfWeek ?? null,
@@ -299,7 +317,7 @@ export const addCollaboratorByEmail = async (
     });
   }
 
-  return { collaborator: result[0], alreadyExists: false };
+  return { collaborator, alreadyExists: false };
 };
 
 // Get collaborators by session item
