@@ -1,6 +1,16 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { insertUserSchema, selectUserSchema } from './users.schema';
-import { getUsers, createUserController, getMe } from './users.controller';
+import {
+  insertUserSchema,
+  selectUserSchema,
+  updateUserSchema,
+} from './users.schema';
+import {
+  getUsers,
+  createUserController,
+  getMe,
+  updateUserController,
+  getPublicProfileController,
+} from './users.controller';
 
 const app = new OpenAPIHono();
 
@@ -37,8 +47,53 @@ const getMeRoute = createRoute({
   },
 });
 
+const updateUserRoute = createRoute({
+  method: 'patch',
+  path: '/me',
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: updateUserSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: selectUserSchema,
+        },
+      },
+      description: 'Update my profile',
+    },
+  },
+});
+
 app.openapi(getUsersRoute, getUsers);
 app.openapi(getMeRoute, getMe);
+app.openapi(updateUserRoute, updateUserController);
+
+const getPublicProfileRoute = createRoute({
+  method: 'get',
+  path: '/:id/public',
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: selectUserSchema,
+        },
+      },
+      description: 'Retrieve public profile',
+    },
+    404: {
+      description: 'User not found',
+    },
+  },
+});
+
+app.openapi(getPublicProfileRoute, getPublicProfileController);
 
 const createUserRoute = createRoute({
   method: 'post',

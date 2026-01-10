@@ -1,6 +1,12 @@
 import type { Context } from 'hono';
-import { getAllUsers, createUser, getUserById } from './users.service';
-import type { NewUser } from './users.schema';
+import {
+  getAllUsers,
+  createUser,
+  getUserById,
+  updateUser,
+  getPublicProfile,
+} from './users.service';
+import type { NewUser, UpdateUser } from './users.schema';
 
 export const getUsers = async (c: Context) => {
   const result = await getAllUsers();
@@ -19,5 +25,23 @@ export const getMe = async (c: Context) => {
 export const createUserController = async (c: Context) => {
   const data = await c.req.json();
   const result = await createUser(data as NewUser);
+  return c.json(result, 200);
+};
+
+export const updateUserController = async (c: Context) => {
+  const user = c.get('user');
+  const data = await c.req.json();
+  const result = await updateUser(user.sub, data as UpdateUser);
+  return c.json(result, 200);
+};
+
+export const getPublicProfileController = async (c: Context) => {
+  const userId = c.req.param('id');
+  const result = await getPublicProfile(userId);
+
+  if (!result) {
+    return c.json({ error: 'User not found' }, 404);
+  }
+
   return c.json(result, 200);
 };
