@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   dailyLogs,
@@ -89,7 +89,7 @@ export const getGroupProgress = async (sessionItemId: string, date: string) => {
   // 4. Calculate statistics from the mapping result
   const totalMembers = members.length;
   const completedMembers = members.filter(
-    (m) => m.status === 'completed',
+    (m) => m.status === 'completed' || m.status === 'waiting',
   ).length;
 
   return {
@@ -266,10 +266,122 @@ export const softDeleteDailyLog = async (id: string, userId: string) => {
 
 // Daily Logs Progress
 export const upsertDailyLogProgress = async (data: UpdateDailyLogProgress) => {
+  // 1. Get the daily log to check goal type
+  const dailyLog = await db.query.dailyLogs.findFirst({
+    where: eq(dailyLogs.id, data.dailyLogId),
+    with: {
+      sessionItem: true,
+    },
+  });
+
+  if (!dailyLog) throw new Error('Daily log not found');
+
+  let statusToSet = data.status;
+
+  // 2. Collaborative Logic
+  if (dailyLog.sessionItem.goalType === 'collaborative') {
+    if (data.status === 'completed') {
+      // Check other collaborators
+      const collaborators = await db.query.sessionCollaborators.findMany({
+        where: and(
+          eq(sessionCollaborators.sessionItemId, dailyLog.sessionItemId),
+          eq(sessionCollaborators.status, 'accepted'),
+          isNull(sessionCollaborators.deletedAt),
+        ),
+      });
+
+      const collaboratorUserIds = collaborators.map(
+        (c) => c.collaboratorUserId,
+      );
+      // Filter out self
+      const peerIds = collaboratorUserIds.filter(
+        (id): id is string => id !== dailyLog.userId && id !== null,
+      );
+
+      if (peerIds.length > 0) {
+        // Get peer logs for today
+        const peerLogs = await db.query.dailyLogs.findMany({
+          where: and(
+            eq(dailyLogs.sessionItemId, dailyLog.sessionItemId),
+            eq(dailyLogs.date, dailyLog.date),
+            inArray(dailyLogs.userId, peerIds),
+          ),
+        });
+
+        // Check if all peers are 'completed' or 'waiting'
+        const allPeersDone = peerIds.every((peerId) => {
+          const log = peerLogs.find((l) => l.userId === peerId);
+          return (
+            log && (log.status === 'completed' || log.status === 'waiting')
+          );
+        });
+
+        if (allPeersDone) {
+          statusToSet = 'completed';
+          // Bulk update peers to 'completed' if they are 'waiting'
+          await db
+            .update(dailyLogs)
+            .set({ status: 'completed', statusUpdatedAt: new Date() })
+            .where(
+              and(
+                eq(dailyLogs.sessionItemId, dailyLog.sessionItemId),
+                eq(dailyLogs.date, dailyLog.date),
+                eq(dailyLogs.status, 'waiting'),
+              ),
+            );
+        } else {
+          statusToSet = 'waiting';
+        }
+      } else {
+        // No peers (solo in collaborative session?), just complete
+        statusToSet = 'completed';
+      }
+    } else if (data.status !== 'waiting') {
+      // If resetting to pending/inprogress/skipped/failed
+      // We need to check if we are breaking a "Group Complete" state
+      // If so, we must downgrade peers from 'completed' to 'waiting'
+
+      // Only proceed if we are currently 'completed' (or if the group was complete)
+      // But simpler: just check if any peers are 'completed'.
+      // If they are, and we are becoming NOT done, they must wait.
+
+      // Fetch peers (similar logic as above)
+      const collaborators = await db.query.sessionCollaborators.findMany({
+        where: and(
+          eq(sessionCollaborators.sessionItemId, dailyLog.sessionItemId),
+          eq(sessionCollaborators.status, 'accepted'),
+          isNull(sessionCollaborators.deletedAt),
+        ),
+      });
+
+      const collaboratorUserIds = collaborators.map(
+        (c) => c.collaboratorUserId,
+      );
+      const peerIds = collaboratorUserIds.filter(
+        (id): id is string => id !== dailyLog.userId && id !== null,
+      );
+
+      if (peerIds.length > 0) {
+        // Downgrade any 'completed' peers to 'waiting'
+        await db
+          .update(dailyLogs)
+          .set({ status: 'waiting', statusUpdatedAt: new Date() })
+          .where(
+            and(
+              eq(dailyLogs.sessionItemId, dailyLog.sessionItemId),
+              eq(dailyLogs.date, dailyLog.date),
+              eq(dailyLogs.status, 'completed'),
+              inArray(dailyLogs.userId, peerIds),
+            ),
+          );
+      }
+    }
+  }
+
   const result = await db
     .update(dailyLogs)
     .set({
-      status: data.status,
+      status: statusToSet,
       statusUpdatedAt: new Date(),
     })
     .where(eq(dailyLogs.id, data.dailyLogId))

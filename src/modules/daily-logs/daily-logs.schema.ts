@@ -22,6 +22,7 @@ export const dailyLogStatusEnum = pgEnum('daily_log_status', [
   'completed',
   'failed',
   'skipped',
+  'waiting',
 ]);
 
 export const DAILY_LOG_STATUS = [
@@ -30,6 +31,7 @@ export const DAILY_LOG_STATUS = [
   'completed',
   'failed',
   'skipped',
+  'waiting',
 ] as const;
 
 export type DailyLogStatus = (typeof DAILY_LOG_STATUS)[number];
@@ -71,7 +73,14 @@ export const selectDailyLogSchema = toOpenApi(createSelectSchema(dailyLogs), {
 
 export const updateDailyLogProgressSchema = z.object({
   dailyLogId: z.string().uuid(),
-  status: z.enum(['pending', 'inprogress', 'completed', 'failed', 'skipped']),
+  status: z.enum([
+    'pending',
+    'inprogress',
+    'completed',
+    'failed',
+    'skipped',
+    'waiting',
+  ]),
 });
 
 export const updateDailyLogRequestSchema = z.object({

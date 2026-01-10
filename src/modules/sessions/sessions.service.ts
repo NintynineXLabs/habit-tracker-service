@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import {
   weeklySessions,
@@ -8,6 +8,7 @@ import {
   type NewSessionItem,
   type NewSessionCollaborator,
 } from './sessions.schema';
+import { dailyLogs } from '../daily-logs/daily-logs.schema';
 import { createNotification } from '../notifications/notifications.service';
 
 // Weekly Sessions - includes both owned sessions and sessions where user is a collaborator
@@ -410,7 +411,7 @@ export const updateCollaboratorStatus = async (
     }
   }
 
-  // If left, notify the owner
+  // If left, notify the owner and check for group completion
   if (status === 'left' && updatedCollaborator) {
     const sessionItem = await db.query.sessionItems.findFirst({
       where: (items, { eq }) => eq(items.id, updatedCollaborator.sessionItemId),
@@ -446,6 +447,63 @@ export const updateCollaboratorStatus = async (
           startTime: sessionItem?.startTime || null,
         },
       });
+    }
+
+    // Check for auto-completion of remaining members
+    const today = new Date().toISOString().split('T')[0];
+    const sessionItemId = updatedCollaborator.sessionItemId;
+
+    // Get remaining accepted collaborators
+    const remainingCollaborators = await db.query.sessionCollaborators.findMany(
+      {
+        where: and(
+          eq(sessionCollaborators.sessionItemId, sessionItemId),
+          eq(sessionCollaborators.status, 'accepted'),
+          isNull(sessionCollaborators.deletedAt),
+        ),
+      },
+    );
+
+    if (remainingCollaborators.length > 0) {
+      const remainingUserIds = remainingCollaborators
+        .map((c) => c.collaboratorUserId)
+        .filter((id): id is string => id !== null);
+
+      if (remainingUserIds.length > 0) {
+        // Get logs for today
+        const logs = await db.query.dailyLogs.findMany({
+          where: and(
+            eq(dailyLogs.sessionItemId, sessionItemId),
+            eq(dailyLogs.date, today!),
+            inArray(dailyLogs.userId, remainingUserIds),
+          ),
+        });
+
+        // Check if ALL remaining logs are 'waiting' (or already completed)
+        // We only care if they are 'waiting' to promote them.
+        // If some are 'pending', we can't complete.
+        // If some are 'completed', that's fine (though shouldn't happen if logic is strict).
+        const allWaitingOrDone = remainingUserIds.every((uid) => {
+          const log = logs.find((l) => l.userId === uid);
+          return (
+            log && (log.status === 'waiting' || log.status === 'completed')
+          );
+        });
+
+        if (allWaitingOrDone) {
+          // Promote all 'waiting' to 'completed'
+          await db
+            .update(dailyLogs)
+            .set({ status: 'completed', statusUpdatedAt: new Date() })
+            .where(
+              and(
+                eq(dailyLogs.sessionItemId, sessionItemId),
+                eq(dailyLogs.date, today!),
+                eq(dailyLogs.status, 'waiting'),
+              ),
+            );
+        }
+      }
     }
   }
 
