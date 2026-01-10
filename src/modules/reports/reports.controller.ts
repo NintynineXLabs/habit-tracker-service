@@ -14,10 +14,12 @@ export const getWeeklySummaryController = async (c: Context) => {
   const dateParam = c.req.query('date');
   const timezone = c.req.query('timezone');
 
+  const userId = c.req.query('userId') || user.sub;
+
   // Use timezone-aware today if no date provided
   const date = dateParam || getTodayInTimezone(timezone);
 
-  const summary = await getWeeklySummaryReport(user.sub, date);
+  const summary = await getWeeklySummaryReport(userId, date);
 
   return c.json(summary, 200);
 };
@@ -34,7 +36,9 @@ export const getDailySummaryController = async (c: Context) => {
     return c.json({ error: 'Date parameter is required' }, 400);
   }
 
-  const summary = await getDailySummaryReport(user.sub, date);
+  const userId = c.req.query('userId') || user.sub;
+
+  const summary = await getDailySummaryReport(userId, date);
 
   return c.json(summary, 200);
 };

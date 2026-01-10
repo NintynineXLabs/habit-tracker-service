@@ -25,6 +25,11 @@ const getWeeklySummaryRoute = createRoute({
           'IANA timezone string for calculating today (e.g., Asia/Jakarta)',
         example: 'Asia/Jakarta',
       }),
+      userId: z.string().optional().openapi({
+        description:
+          'Optional user ID to fetch report for (defaults to current user)',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+      }),
     }),
   },
   responses: {
@@ -54,6 +59,11 @@ const getDailySummaryRoute = createRoute({
         description:
           'IANA timezone string for timezone context (e.g., Asia/Jakarta)',
         example: 'Asia/Jakarta',
+      }),
+      userId: z.string().optional().openapi({
+        description:
+          'Optional user ID to fetch report for (defaults to current user)',
+        example: '123e4567-e89b-12d3-a456-426614174000',
       }),
     }),
   },
